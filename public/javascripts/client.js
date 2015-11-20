@@ -71,19 +71,26 @@
 				class: ""
 			});
 
-			startX = startY = null;
-
 			socket.emit("shot-fired", {
 				power: Math.min(evt.distance, MAX_DISTANCE) / MAX_DISTANCE,
 				angle: evt.angle,
+				deltaX: correctX - startX,
+				deltaY: correctY - startY,
 			})
 
-		} else if (evt.isFirst) {
-			onPress(evt);
+			startX = startY = null;
+
 		} else {
 			dpEnd.add(dpLine).attr({
 				class: "show"
 			});
+
+			socket.emit("aim-change", {
+				power: Math.min(evt.distance, MAX_DISTANCE) / MAX_DISTANCE,
+				angle: evt.angle,
+				deltaX: correctX - startX,
+				deltaY: correctY - startY,
+			})
 		}
 	}
 

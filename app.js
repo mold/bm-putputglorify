@@ -24,6 +24,11 @@ io.on('connection', function(socket) {
   socket.on("shot-fired", function shotFired(msg) {
     console.log("Client " + socket.id + " fired!", msg);
   })
+  socket.on("aim-change", function aimChange(msg) {
+    // TODO: do something here
+    // update view etc
+    // console.log(socket.id + " aimed:", msg)
+  })
   socket.on('update movement', function(msg) {
     io.emit('update movement', msg);
   });
