@@ -25,14 +25,26 @@
 		// pressing down
 		hammer.on("press", onPress);
 		hammer.get("press").set({
-			time: 0
+			time: 0,
 		})
+
+		// // gotta do this so we don't refresh 
+		// $(document.body).on("touchstart", function(event) {
+		// 	event.preventDefault();
+		// });
 	}
 
 	function onPan(evt) {
 		// console.log(evt);
+		evt.preventDefault();
 		var correctX = evt.center.x,
 			correctY = evt.center.y;
+
+		if (typeof startX !== "number") {
+			// "PRESS" event didnt get fired (thanks fucking phones)
+			onPress(evt);
+			return;
+		}
 
 		if (evt.distance > MAX_DISTANCE) {
 			// Snap to max distance
@@ -54,9 +66,20 @@
 		})
 
 		if (evt.isFinal) {
+			// send shot!!! it's done!!!
 			dpStart.add(dpEnd).add(dpLine).attr({
 				class: ""
 			});
+
+			startX = startY = null;
+
+			socket.emit("shot-fired", {
+				power: Math.min(evt.distance, MAX_DISTANCE) / MAX_DISTANCE,
+				angle: evt.angle,
+			})
+
+		} else if (evt.isFirst) {
+			onPress(evt);
 		} else {
 			dpEnd.add(dpLine).attr({
 				class: "show"
@@ -68,12 +91,16 @@
 		// console.log(evt);
 		startX = evt.center.x;
 		startY = evt.center.y;
-
 		dpStart.attr({
 			class: "show",
 			cx: startX,
 			cy: startY
 		})
+	}
+
+	function debug(msg) {
+		$("#debug").html(JSON.stringify(msg));
+		console.log(msg);
 	}
 
 })();
