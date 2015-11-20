@@ -5,6 +5,7 @@ var io = require('socket.io')(http);
 
 app.use("/scripts", express.static(__dirname + "/public/javascripts"));
 app.use("/styles", express.static(__dirname + "/public/stylesheets"));
+app.use("/sprites", express.static(__dirname + "/public/sprites"));
 app.use("/views", express.static(__dirname + "/views"));
 
 app.get('/', function(req, res){
