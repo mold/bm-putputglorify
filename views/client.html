@@ -1,0 +1,24 @@
+<h2>Client controller</h2>
+<script src="/socket.io/socket.io.js"></script>
+<script type="text/javascript">
+	var socket = io();
+    init();
+
+    function init() {
+      if (window.DeviceOrientationEvent) {
+        window.addEventListener('deviceorientation', function(eventData) {
+          var tiltLR = eventData.gamma;
+          var tiltFB = eventData.beta;
+          var dir = eventData.alpha
+          deviceOrientationHandler(tiltLR, tiltFB, dir);
+          }, false);
+      }
+      else {
+        document.getElementsByTagName('body').innerHTML = "Not supported on your device or browser.  Sorry.";
+      }
+    }
+  
+    function deviceOrientationHandler(tiltLR, tiltFB, dir) {
+		  socket.emit('update movement', {"tiltLR":Math.round(tiltLR), "tiltFB":Math.round(tiltFB),"dir":Math.round(dir)});
+    }
+  </script>

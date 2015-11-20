@@ -22,4 +22,8 @@
   },
   "homepage": "https://github.com/mold/bm-putputglorify#readme",
   "private": true,
+  "dependencies": {
+    "express": "^4.13.3",
+    "socket.io": "^1.3.7"
+  }
 }
