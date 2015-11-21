@@ -1,151 +1,150 @@
 define(["THREE",
-        "RandomEngine",
-        "CameraMovement",
-        "Airplane",
-        "Skybox",
-        "IOHandler"
-    ],
-    function(THREE,
-        RandomEngine,
-        CameraMovement,
-        Airplane,
-        Skybox,
-        IOHandler) {
+    "RandomEngine",
+    "IOHandler",
+    "Sprite",
+    "WallSprite"
+], function(THREE,
+    RandomEngine,
+    IOHandler,
+    Sprite,
+    WallSprite) {
 
-        // https://color.adobe.com/create/color-wheel
-        var colorScheme = [0x4914CC, 0x665199, 0x0040FF, 0xFFB740, 0xCC6F14];
-        var randomColorFromScheme = function() {
-            return colorScheme[Math.floor(RandomEngine.random() * colorScheme.length)];
+    // https://color.adobe.com/create/color-wheel
+    var colorScheme = [0x4914CC, 0x665199, 0x0040FF, 0xFFB740, 0xCC6F14];
+    var randomColorFromScheme = function() {
+        return colorScheme[Math.floor(RandomEngine.random() * colorScheme.length)];
+    };
+
+    var addLights = function(scene) {
+        var light = new THREE.AmbientLight(0x404040); // soft white light
+        scene.add(light);
+    };
+
+    (function() {
+
+        var scene = new THREE.Scene();
+        var clock = new THREE.Clock();
+        var camera = new THREE.PerspectiveCamera(75,
+            window.innerWidth /
+            window.innerHeight,
+            0.1,
+            1000);
+        var renderer = new THREE.WebGLRenderer();
+        var iohandler = new IOHandler();
+
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        var bgColor = 0x332222; //randomColorFromScheme();
+        renderer.setClearColor(bgColor);
+
+        document.body.appendChild(renderer.domElement);
+
+        addLights(scene);
+
+        var topObj = new THREE.Object3D();
+
+        var cube = new THREE.Mesh(new THREE.CubeGeometry(1, 1, 1), new THREE.MeshNormalMaterial());
+
+        var map = [
+            [1, 1, 1, 1],
+            [1, 0, 0, 1],
+            [1, 0, 0, 1],
+            [1, 1, 1, 1]
+        ];
+
+        var tileMap = [
+            [5, 1, 1, 6],
+            [4, 0, 0, 2],
+            [4, 0, 0, 2],
+            [8, 3, 3, 7]
+        ];
+
+        var types = {
+            1: "top",
+            2: "right",
+            3: "bottom",
+            4: "left",
+            5: "top-left",
+            6: "top-right",
+            7: "bottom-right",
+            8: "bottom-left"
         };
 
-
-        var NewCube = function(color) {
-            var geometry = new THREE.BoxGeometry(0.1, 0.1, 0.1);
-            var material = new THREE.MeshBasicMaterial({
-                color: color,
-                side: THREE.DoubleSide
-            });
-
-            var cube = new THREE.Mesh(geometry, material);
-
-            return cube;
-        };
-
-        var NewAxis = function() {
-            var redCube = NewCube(0xee0000);
-            var blueCube = NewCube(0x00ee00);
-            var greenCube = NewCube(0x0000ee);
-            var whiteCube = NewCube(0xffffff);
-
-            redCube.position.x = 1; // positive x-axis
-            blueCube.position.y = 1; // positive y-axis
-            greenCube.position.z = 1; // positive z-axis
-            // white is origo
-
-            var axis = new THREE.Object3D();
-
-            axis.add(redCube);
-            axis.add(blueCube);
-            axis.add(greenCube);
-            axis.add(whiteCube);
-
-            return axis;
-        };
-
-        var addLights = function(scene) {
-
-            var light = new THREE.AmbientLight(0x404040); // soft white light
-            scene.add(light);
-
-            var pointLight = new THREE.PointLight(0xeeeeee, 1, 0);
-            scene.add(pointLight);
-
-            pointLight.position.y = 5;
-            pointLight.position.z = -2;
-        };
-
-
-        (function() {
-
-            var scene = new THREE.Scene();
-            var clock = new THREE.Clock();
-            var camera = new THREE.PerspectiveCamera(75,
-                window.innerWidth /
-                window.innerHeight,
-                0.1,
-                1000);
-            var renderer = new THREE.WebGLRenderer();
-            var iohandler = new IOHandler();
-
-            renderer.setSize(window.innerWidth, window.innerHeight);
-            var bgColor = randomColorFromScheme();
-            renderer.setClearColor(bgColor);
-
-            document.body.appendChild(renderer.domElement);
-
-            // TODO: figure out how fog works
-            scene.fog = new THREE.FogExp2(bgColor, 0.0025);
-
-            addLights(scene);
-
-            var topObj = new THREE.Object3D();
-
-            var airplane = Airplane();
-            var axis = NewAxis();
-            var skybox = Skybox;
-
-            topObj.add(airplane);
-
-            topObj.add(axis);
-
-            topObj.add(Skybox);
-
-
-            scene.add(topObj);
-
-            camera.position.z = 5;
-            camera.position.y = 1;
-
-            var resizeHandler = function(event) {
-                camera.aspect = window.innerWidth / window.innerHeight;
-                camera.updateProjectionMatrix();
-                renderer.setSize(window.innerWidth, window.innerHeight);
-            };
-
-            window.addEventListener('resize',
-                resizeHandler,
-                false);
-
-            // Main render loop
-            window.paused = false;
-            var cm = new CameraMovement(camera);
-            cm.cameraPan(new THREE.Vector3(5, 2, 5));
-
-            var loop = function() {
-
-                if (window.paused) {
-                    return window.requestAnimationFrame(loop);
+        var walls = [];
+        // load wall image
+        var img = new Image();
+        img.src = "sprites/dawnlike/Objects/Wall.png";
+        img.onload = function() {
+            for (var i = 0; i < map.length; i++) {
+                for (var j = 0; j < map[i].length; j++) {
+                    if (map[i][j] != 0) {
+                        var wall = new WallSprite(img, types[tileMap[i][j]]);
+                        wall._x = j - map[i].length / 2 + 0.5;
+                        wall._y = map.length / 2 - i;
+                        wall.position.set(wall._x, wall._y, 0);
+                        wall.setSize(1, 1);
+                        topObj.add(wall);
+                        walls.push(wall);
+                    }
                 }
+            }
+        };
 
-                renderer.render(scene, camera);
+        // load character
+        var character;
+        var img2 = new Image();
+        img2.src = "sprites/dawnlike/Characters/Reptile1.png";
+        img2.onload = function() {
+            character = new Sprite(img2, img2.width, img2.height, 16, 16);
+            character.setTile(8 * 11 + 1);
+            character.setSize(1, 1);
+            topObj.add(character);
+        };
 
-                var deltaTime = clock.getDelta();
-                var ioRotationAndPos = iohandler.getRotationAndPosition();
-                var ioRotation = ioRotationAndPos[0];
-                var ioPosition = ioRotationAndPos[1];
+        //topObj.add(cube);
 
-                //console.log('%cRotation:', "color:green;", ioRotation);
+        scene.add(topObj);
 
-                airplane.quaternion.slerp(ioRotation, 0.1);
-                airplane.position.lerp(ioPosition, 0.1);
-                //airplane.material.uniforms.time.value += 10 * deltaTime;
+        camera.position.z = 5;
+        camera.position.y = 0;
 
-                //cm.move(deltaTime);
+        var resizeHandler = function(event) {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        };
 
+        window.addEventListener('resize',
+            resizeHandler,
+            false);
+
+        // Main render loop
+        window.paused = false;
+
+        var ang = 0;
+        var loop = function() {
+
+            if (window.paused) {
                 return window.requestAnimationFrame(loop);
-            };
+            }
 
-            loop();
-        })();
+            renderer.render(scene, camera);
 
-    });
+            var deltaTime = clock.getDelta();
+
+            for (var i = 0; i < walls.length; i++) {
+                walls[i].position.set(walls[i]._x + Math.random() * deltaTime * 2, walls[i]._y + Math.random() * deltaTime * 2, 0);
+            }
+
+            if (character) {
+                character.position.set(Math.cos(ang) * 0.5 - 0.5, Math.sin(ang) * 0.5 + 0.5, 0);
+                character.rotation.setFromQuaternion(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 0, 1), ang));
+            }
+            ang += Math.PI * deltaTime;
+
+            return window.requestAnimationFrame(loop);
+        };
+
+        loop();
+    })();
+
+});
