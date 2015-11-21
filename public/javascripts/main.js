@@ -70,14 +70,18 @@ define(["THREE",
         };
 
         var walls = [];
-        // load wall image
-        var img = new Image();
-        img.src = "sprites/dawnlike/Objects/Wall.png";
-        img.onload = function() {
+        var character;
+
+        var images = {};
+
+        var loadManager = new THREE.LoadingManager();
+        loadManager.onLoad = function() {
+            console.log(loadManager, imgLoader);
+            // add map
             for (var i = 0; i < map.length; i++) {
                 for (var j = 0; j < map[i].length; j++) {
                     if (map[i][j] != 0) {
-                        var wall = new WallSprite(img, types[tileMap[i][j]]);
+                        var wall = new WallSprite(images.Wall, types[tileMap[i][j]]);
                         wall._x = j - map[i].length / 2 + 0.5;
                         wall._y = map.length / 2 - i;
                         wall.position.set(wall._x, wall._y, 0);
@@ -87,20 +91,24 @@ define(["THREE",
                     }
                 }
             }
-        };
 
-        // load character
-        var character;
-        var img2 = new Image();
-        img2.src = "sprites/dawnlike/Characters/Reptile1.png";
-        img2.onload = function() {
-            character = new Sprite(img2, img2.width, img2.height, 16, 16);
+            // add character
+            character = new Sprite(images.Reptile1, images.Reptile1.width, images.Reptile1.height, 16, 16);
             character.setTile(8 * 11 + 1);
             character.setSize(1, 1);
             topObj.add(character);
         };
 
-        //topObj.add(cube);
+        var imgLoader = new THREE.ImageLoader(loadManager);
+
+        function imageLoaded(img) {
+            var fname = img.src.split("/");
+            fname = fname[fname.length - 1].split(".")[0];
+            images[fname] = img;
+        }
+
+        imgLoader.load("sprites/dawnlike/Characters/Reptile1.png", imageLoaded);
+        imgLoader.load("sprites/dawnlike/Objects/Wall.png", imageLoaded);
 
         scene.add(topObj);
 
