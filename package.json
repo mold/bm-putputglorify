@@ -3,7 +3,10 @@
   "version": "0.0.1",
   "description": "The second project in AGI15. Uses mobile phones to aim a gun.",
   "dependencies": {
+    "cannon": "^0.6.2",
     "express": "^4.13.3",
+    "node-gameloop": "^0.1.0",
+    "prototypes": "^1.1.0",
     "socket.io": "^1.3.7"
   }
 }
