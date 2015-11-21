@@ -57,7 +57,6 @@ define(["THREE",
             [4, 0, 0, 2],
             [8, 3, 3, 7]
         ];
-
         var types = {
             1: "top",
             2: "right",

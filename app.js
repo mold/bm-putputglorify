@@ -29,26 +29,25 @@ app.get('/server', function(req, res) {
   });
 });
 
-io.on('connection', function(socket) {
-  console.log('Client connected! Id:', socket.id);
-  socket.on("shot-fired", function shotFired(msg) {
-    console.log("Client " + socket.id + " fired!", msg);
-  })
 
-  socket.on("aim-change", function aimChange(msg) {
-    // TODO: do something here
-    // update view etc
-    // console.log(socket.id + " aimed:", msg)
-  })
+var map = [
+  [1, 1, 1, 1],
+  [1, 0, 0, 1],
+  [1, 0, 0, 1],
+  [1, 1, 1, 1]
+];
 
-  socket.on('update movement', function(msg) {
-    io.emit('update movement', msg);
-  });
-  socket.on('disconnect', function() {
-    console.log('Client disconnected!');
-  });
-});
+var tileMap = [
+  [5, 1, 1, 6],
+  [4, 0, 0, 2],
+  [4, 0, 0, 2],
+  [8, 3, 3, 7]
+];
 
+var maps = {
+  map: map,
+  tileMap: tileMap
+};
 
 var world = new CANNON.World();
 
@@ -85,6 +84,33 @@ var world = new CANNON.World();
 
 })();
 
+
+// Setup socket.io connections
+
+io.on('connection', function(socket) {
+  console.log('Client connected! Id:', socket.id);
+  io.emit('maps-update', maps);
+
+  socket.on("shot-fired", function shotFired(msg) {
+    console.log("Client " + socket.id + " fired!", msg);
+  })
+
+  socket.on("aim-change", function aimChange(msg) {
+    // TODO: do something here
+    // update view etc
+    // console.log(socket.id + " aimed:", msg)
+  })
+
+  socket.on('update movement', function(msg) {
+    io.emit('update movement', msg);
+  });
+  socket.on('disconnect', function() {
+    console.log('Client disconnected!');
+  });
+});
+
+
+// Serve http forever and ever
 http.listen(3004, function() {
   console.log('Listening on port: 3004');
 });
