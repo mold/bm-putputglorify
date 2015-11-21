@@ -4,6 +4,7 @@ var http = require('http').Server(app);
 var io = require('socket.io')(http);
 var CANNON = require('cannon');
 var gameloop = require('node-gameloop');
+var world = new CANNON.World();
 
 app.use("/scripts", express.static(__dirname + "/public/javascripts"));
 app.use("/styles", express.static(__dirname + "/public/stylesheets"));
@@ -29,28 +30,27 @@ app.get('/server', function(req, res) {
   });
 });
 
-io.on('connection', function(socket) {
-  console.log('Client connected! Id:', socket.id);
-  socket.on("shot-fired", function shotFired(msg) {
-    console.log("Client " + socket.id + " fired!", msg);
-  })
-
-  socket.on("aim-change", function aimChange(msg) {
-    // TODO: do something here
-    // update view etc
-    // console.log(socket.id + " aimed:", msg)
-  })
-
-  socket.on('update movement', function(msg) {
-    io.emit('update movement', msg);
-  });
-  socket.on('disconnect', function() {
-    console.log('Client disconnected!');
-  });
-});
 
 
-var world = new CANNON.World();
+var map = [
+  [1, 1, 1, 1],
+  [1, 0, 0, 1],
+  [1, 0, 0, 1],
+  [1, 1, 1, 1]
+];
+
+var tileMap = [
+  [5, 1, 1, 6],
+  [4, 0, 0, 2],
+  [4, 0, 0, 2],
+  [8, 3, 3, 7]
+];
+
+var maps = {
+  map: map,
+  tileMap: tileMap
+};
+
 
 // Server main init
 (function() {
@@ -85,6 +85,48 @@ var world = new CANNON.World();
 
 })();
 
+
+// Setup socket.io connections
+
+io.on('connection', function(socket) {
+  // Send maps the first we do
+  io.emit('maps-update', maps);
+
+  var rad = 1;
+  var sphereBody = new CANNON.Body({
+    mass: 5, // kg
+    position: new CANNON.Vec3(0, 0, 10), // m
+    shape: new CANNON.Sphere(rad)
+  });
+  world.addBody(sphereBody);
+
+  console.log('Client connected! Id:', socket.id);
+  socket.on("shot-fired", function shotFired(msg) {
+    console.log("Client " + socket.id + " fired!", msg);
+    sphereBody.applyForce(new CANNON.Vec3(msg.deltaX * msg.power * 10, msg.deltaY * msg.power * 10, 0),
+      new CANNON.Vec3(sphereBody.position.x - rad / 2,
+        sphereBody.position.y - rad / 2,
+        sphereBody.position.z))
+  })
+
+  socket.on("aim-change", function aimChange(msg) {
+    // TODO: do something here
+    // update view etc
+    // console.log(socket.id + " aimed:", msg)
+  })
+
+  socket.on('update movement', function(msg) {
+    io.emit('update movement', msg);
+  });
+  socket.on('disconnect', function() {
+    console.log('Client disconnected!');
+    world.removeBody(sphereBody);
+  });
+});
+
+
+
+// Serve http forever and ever
 http.listen(3004, function() {
   console.log('Listening on port: 3004');
 });
