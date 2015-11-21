@@ -45,24 +45,45 @@ var tileMap = [
   [4, 0, 0, 2],
   [8, 3, 3, 7]
 ];
+var bodyMap = [];
 
 var maps = {
   map: map,
   tileMap: tileMap
 };
 
+var initWorldBodiesFromMap = function() {
+  for (var i = 0; i < map.length; i++) {
+    bodyMap.push([]);
+    for (var j = map[0].length - 1; j >= 0; j--) {
+      var elem = map[i][j];
+      if (0 != elem) {
+        var elemBody = new CANNON.Body({
+          mass: 0, // static
+          position: new CANNON.Vec3(i, 0.5, j),
+          shape: new CANNON.Box(new CANNON.Vec3(0.5, 0.5, 0.5))
+        });
+
+        world.addBody(elemBody);
+        bodyMap[i].push(elemBody);
+      }
+      bodyMap[i].push(null);
+    };
+  }
+};
 
 // Server main init
 (function() {
 
   // Setup our world
-  world.gravity.set(0, 0, -9.82); // m/s²
+  world.gravity.set(0, -9.82, 0); // m/s²
+  initWorldBodiesFromMap();
 
   // Create a sphere
   var radius = 1; // m
   var sphereBody = new CANNON.Body({
     mass: 5, // kg
-    position: new CANNON.Vec3(0, 0, 10), // m
+    position: new CANNON.Vec3(0, 10, 0), // m
     shape: new CANNON.Sphere(radius)
   });
   world.addBody(sphereBody);
@@ -95,7 +116,7 @@ io.on('connection', function(socket) {
   var rad = 1;
   var sphereBody = new CANNON.Body({
     mass: 5, // kg
-    position: new CANNON.Vec3(0, 0, 10), // m
+    position: new CANNON.Vec3(0, 10, 0), // m
     shape: new CANNON.Sphere(rad)
   });
   world.addBody(sphereBody);
