@@ -4,6 +4,7 @@ var http = require('http').Server(app);
 var io = require('socket.io')(http);
 var CANNON = require('cannon');
 var gameloop = require('node-gameloop');
+var world = new CANNON.World();
 
 app.use("/scripts", express.static(__dirname + "/public/javascripts"));
 app.use("/styles", express.static(__dirname + "/public/stylesheets"));
@@ -30,6 +31,7 @@ app.get('/server', function(req, res) {
 });
 
 
+
 var map = [
   [1, 1, 1, 1],
   [1, 0, 0, 1],
@@ -49,7 +51,6 @@ var maps = {
   tileMap: tileMap
 };
 
-var world = new CANNON.World();
 
 // Server main init
 (function() {
@@ -88,11 +89,24 @@ var world = new CANNON.World();
 // Setup socket.io connections
 
 io.on('connection', function(socket) {
-  console.log('Client connected! Id:', socket.id);
+  // Send maps the first we do
   io.emit('maps-update', maps);
 
+  var rad = 1;
+  var sphereBody = new CANNON.Body({
+    mass: 5, // kg
+    position: new CANNON.Vec3(0, 0, 10), // m
+    shape: new CANNON.Sphere(rad)
+  });
+  world.addBody(sphereBody);
+
+  console.log('Client connected! Id:', socket.id);
   socket.on("shot-fired", function shotFired(msg) {
     console.log("Client " + socket.id + " fired!", msg);
+    sphereBody.applyForce(new CANNON.Vec3(msg.deltaX * msg.power * 10, msg.deltaY * msg.power * 10, 0),
+      new CANNON.Vec3(sphereBody.position.x - rad / 2,
+        sphereBody.position.y - rad / 2,
+        sphereBody.position.z))
   })
 
   socket.on("aim-change", function aimChange(msg) {
@@ -106,8 +120,10 @@ io.on('connection', function(socket) {
   });
   socket.on('disconnect', function() {
     console.log('Client disconnected!');
+    world.removeBody(sphereBody);
   });
 });
+
 
 
 // Serve http forever and ever
