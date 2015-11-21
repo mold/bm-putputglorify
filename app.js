@@ -31,16 +31,21 @@ app.get('/server', function(req, res) {
 });
 
 io.on('connection', function(socket) {
+  var rad = 1;
   var sphereBody = new CANNON.Body({
     mass: 5, // kg
     position: new CANNON.Vec3(0, 0, 10), // m
-    shape: new CANNON.Sphere(1)
+    shape: new CANNON.Sphere(rad)
   });
   world.addBody(sphereBody);
 
   console.log('Client connected! Id:', socket.id);
   socket.on("shot-fired", function shotFired(msg) {
     console.log("Client " + socket.id + " fired!", msg);
+    sphereBody.applyForce(new CANNON.Vec3(msg.deltaX * msg.power * 10, msg.deltaY * msg.power * 10, 0),
+      new CANNON.Vec3(sphereBody.position.x - rad / 2,
+        sphereBody.position.y - rad / 2,
+        sphereBody.position.z))
   })
 
   socket.on("aim-change", function aimChange(msg) {
