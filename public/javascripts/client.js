@@ -60,6 +60,8 @@
 		dpEnd.attr({
 			cx: correctX,
 			cy: correctY,
+			x: correctX,
+			y: correctY,
 			rx: 20 + 80 * power,
 			ry: 20 + 80 * power,
 		})

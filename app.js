@@ -4,6 +4,7 @@ var http = require('http').Server(app);
 var io = require('socket.io')(http);
 var CANNON = require('cannon');
 var gameloop = require('node-gameloop');
+var world = new CANNON.World();
 
 app.use("/scripts", express.static(__dirname + "/public/javascripts"));
 app.use("/styles", express.static(__dirname + "/public/stylesheets"));
@@ -30,6 +31,13 @@ app.get('/server', function(req, res) {
 });
 
 io.on('connection', function(socket) {
+  var sphereBody = new CANNON.Body({
+    mass: 5, // kg
+    position: new CANNON.Vec3(0, 0, 10), // m
+    shape: new CANNON.Sphere(1)
+  });
+  world.addBody(sphereBody);
+
   console.log('Client connected! Id:', socket.id);
   socket.on("shot-fired", function shotFired(msg) {
     console.log("Client " + socket.id + " fired!", msg);
@@ -46,11 +54,11 @@ io.on('connection', function(socket) {
   });
   socket.on('disconnect', function() {
     console.log('Client disconnected!');
+    world.removeBody(sphereBody);
   });
 });
 
 
-var world = new CANNON.World();
 
 // Server main init
 (function() {
