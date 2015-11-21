@@ -2,12 +2,14 @@ define(["THREE",
     "RandomEngine",
     "IOHandler",
     "Sprite",
-    "WallSprite"
+    "WallSprite",
+    "SocketIO"
 ], function(THREE,
     RandomEngine,
     IOHandler,
     Sprite,
-    WallSprite) {
+    WallSprite,
+    SocketIO) {
 
     // https://color.adobe.com/create/color-wheel
     var colorScheme = [0x4914CC, 0x665199, 0x0040FF, 0xFFB740, 0xCC6F14];
@@ -20,6 +22,9 @@ define(["THREE",
         scene.add(light);
     };
 
+    var socket = new SocketIO();
+
+
     (function() {
 
         var scene = new THREE.Scene();
@@ -31,6 +36,7 @@ define(["THREE",
             1000);
         var renderer = new THREE.WebGLRenderer();
         var iohandler = new IOHandler();
+
 
         renderer.setSize(window.innerWidth, window.innerHeight);
         var bgColor = 0x332222; //randomColorFromScheme();
@@ -104,7 +110,7 @@ define(["THREE",
 
         scene.add(topObj);
 
-        camera.position.z = 5;
+        camera.position.z = 10;
         camera.position.y = 0;
 
         var resizeHandler = function(event) {
@@ -116,6 +122,16 @@ define(["THREE",
         window.addEventListener('resize',
             resizeHandler,
             false);
+
+        socket.on("new-body", function(body) {
+            // character.position.set(body.position)
+
+        });
+
+        socket.on("bodies", function(bodies) {
+            // var pos = bodies[0];
+            // character.position.set(pos.x, pos.y, pos.z)
+        })
 
         // Main render loop
         window.paused = false;
@@ -136,7 +152,7 @@ define(["THREE",
             }
 
             if (character) {
-                character.position.set(Math.cos(ang) * 0.5 - 0.5, Math.sin(ang) * 0.5 + 0.5, 0);
+                // character.position.set(Math.cos(ang) * 0.5 - 0.5, Math.sin(ang) * 0.5 + 0.5, 0);
                 character.rotation.setFromQuaternion(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 0, 1), ang));
             }
             ang += Math.PI * deltaTime;

@@ -5,6 +5,7 @@ var io = require('socket.io')(http);
 var CANNON = require('cannon');
 var gameloop = require('node-gameloop');
 var world = new CANNON.World();
+var latestBody;
 
 app.use("/scripts", express.static(__dirname + "/public/javascripts"));
 app.use("/styles", express.static(__dirname + "/public/stylesheets"));
@@ -29,10 +30,10 @@ app.get('/server', function(req, res) {
     root: __dirname + "/views"
   });
 });
-
 io.on('connection', function(socket) {
   var rad = 1;
-  var sphereBody = new CANNON.Body({
+  var sphereBody;
+  latestBody = sphereBody = new CANNON.Body({
     mass: 5, // kg
     position: new CANNON.Vec3(0, 0, 10), // m
     shape: new CANNON.Sphere(rad)
@@ -42,7 +43,8 @@ io.on('connection', function(socket) {
   console.log('Client connected! Id:', socket.id);
   socket.on("shot-fired", function shotFired(msg) {
     console.log("Client " + socket.id + " fired!", msg);
-    sphereBody.applyForce(new CANNON.Vec3(msg.deltaX * msg.power * 10, msg.deltaY * msg.power * 10, 0),
+    var powerMultiplier = 10;
+    sphereBody.applyForce(new CANNON.Vec3(msg.deltaX * msg.power * powerMultiplier, msg.deltaY * msg.power * powerMultiplier, 0),
       new CANNON.Vec3(sphereBody.position.x - rad / 2,
         sphereBody.position.y - rad / 2,
         sphereBody.position.z))
@@ -53,6 +55,11 @@ io.on('connection', function(socket) {
     // update view etc
     // console.log(socket.id + " aimed:", msg)
   })
+
+  io.emit("new-body", {
+    position: sphereBody.position,
+    quaternion: sphereBody.quaternion
+  });
 
   socket.on('update movement', function(msg) {
     io.emit('update movement', msg);
@@ -94,6 +101,17 @@ io.on('connection', function(socket) {
   // Start the physics simulation loop
   gameloop.setGameLoop(function(delta) {
     world.step(fixedTimeStep, delta, maxSubSteps);
+
+    if (io.sockets.sockets) {
+      io.sockets.sockets.forEach(function(sock) {
+        sock.emit("bodies", world.bodies.map(function(bod) {
+          return {
+            position: bod.position,
+            quaternion: body.quaternion
+          };
+        }))
+      })
+    }
   }, 1000 / 30);
 
 })();
