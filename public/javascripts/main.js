@@ -44,19 +44,6 @@ define(["THREE",
 
         var cube = new THREE.Mesh(new THREE.CubeGeometry(1, 1, 1), new THREE.MeshNormalMaterial());
 
-        var map = [
-            [1, 1, 1, 1],
-            [1, 0, 0, 1],
-            [1, 0, 0, 1],
-            [1, 1, 1, 1]
-        ];
-
-        var tileMap = [
-            [5, 1, 1, 6],
-            [4, 0, 0, 2],
-            [4, 0, 0, 2],
-            [8, 3, 3, 7]
-        ];
         var types = {
             1: "top",
             2: "right",
@@ -72,30 +59,11 @@ define(["THREE",
         var character;
 
         var images = {};
+        var imagesLoaded = false;
 
         var loadManager = new THREE.LoadingManager();
         loadManager.onLoad = function() {
-            console.log(loadManager, imgLoader);
-            // add map
-            for (var i = 0; i < map.length; i++) {
-                for (var j = 0; j < map[i].length; j++) {
-                    if (map[i][j] != 0) {
-                        var wall = new WallSprite(images.Wall, types[tileMap[i][j]]);
-                        wall._x = j - map[i].length / 2 + 0.5;
-                        wall._y = map.length / 2 - i;
-                        wall.position.set(wall._x, wall._y, 0);
-                        wall.setSize(1, 1);
-                        topObj.add(wall);
-                        walls.push(wall);
-                    }
-                }
-            }
-
-            // add character
-            character = new Sprite(images.Reptile1, images.Reptile1.width, images.Reptile1.height, 16, 16);
-            character.setTile(8 * 11 + 1);
-            character.setSize(1, 1);
-            topObj.add(character);
+            imagesLoaded = true;
         };
 
         var imgLoader = new THREE.ImageLoader(loadManager);
@@ -120,6 +88,33 @@ define(["THREE",
             renderer.setSize(window.innerWidth, window.innerHeight);
         };
 
+        var loaded = false;
+
+        var load = function() {
+            // add map
+            var map = iohandler.maps.map;
+            var tileMap = iohandler.maps.tileMap;
+            for (var i = 0; i < map.length; i++) {
+                for (var j = 0; j < map[i].length; j++) {
+                    if (map[i][j] != 0) {
+                        var wall = new WallSprite(images.Wall, types[tileMap[i][j]]);
+                        wall._x = j - map[i].length / 2 + 0.5;
+                        wall._y = map.length / 2 - i;
+                        wall.position.set(wall._x, wall._y, 0);
+                        wall.setSize(1, 1);
+                        topObj.add(wall);
+                        walls.push(wall);
+                    }
+                }
+            }
+
+            // add character
+            character = new Sprite(images.Reptile1, images.Reptile1.width, images.Reptile1.height, 16, 16);
+            character.setTile(8 * 11 + 1);
+            character.setSize(1, 1);
+            topObj.add(character);
+        }
+
         window.addEventListener('resize',
             resizeHandler,
             false);
@@ -129,6 +124,11 @@ define(["THREE",
 
         var ang = 0;
         var loop = function() {
+
+            if (!loaded && imagesLoaded && iohandler.maps) {
+                load();
+                loaded = true;
+            }
 
             if (window.paused) {
                 return window.requestAnimationFrame(loop);
