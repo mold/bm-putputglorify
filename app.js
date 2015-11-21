@@ -4,8 +4,11 @@ var http = require('http').Server(app);
 var io = require('socket.io')(http);
 var CANNON = require('cannon');
 var gameloop = require('node-gameloop');
+var MersenneTwister = require(__dirname + '/public/javascripts/lib/mersenne-twister.js');
 var world = new CANNON.World();
 var latestBody;
+
+var RandomEngine = new MersenneTwister(40);
 
 app.use("/scripts", express.static(__dirname + "/public/javascripts"));
 app.use("/styles", express.static(__dirname + "/public/stylesheets"));
@@ -32,26 +35,17 @@ app.get('/server', function(req, res) {
 });
 
 
+var w = 16;
+var h = 16;
+var map = new Array(h);
+for (var i = 0; i < map.length; i++) {
+  map[i] = new Array(w);
+  for (var j = 0; j < map[0].length; j++) {
+    map[i][j] = Math.round(0.2 + RandomEngine.random() * 0.8);
+  }
+}
 
-var map = [
-  [1, 1, 1, 1],
-  [1, 0, 0, 1],
-  [1, 0, 0, 1],
-  [1, 1, 1, 1]
-];
-
-var tileMap = [
-  [5, 1, 1, 6],
-  [4, 0, 0, 2],
-  [4, 0, 0, 2],
-  [8, 3, 3, 7]
-];
 var bodyMap = [];
-
-var maps = {
-  map: map,
-  tileMap: tileMap
-};
 
 var initWorldBodiesFromMap = function() {
   for (var i = 0; i < map.length; i++) {
@@ -118,8 +112,8 @@ var initWorldBodiesFromMap = function() {
 
 })();
 io.on('connection', function(socket) {
-  // Send maps the first we do
-  io.emit('maps-update', maps);
+  // Send map the first we do
+  io.emit('map-update', map);
 
   var rad = 1;
   var sphereBody = new CANNON.Body({

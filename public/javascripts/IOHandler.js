@@ -20,15 +20,15 @@ define(
 				//console.log(tiltFB + ", " + tiltLR + ", " + dir);
 			}).bind(this));
 
-			this.maps = null;
-			socket.on('maps-update', (function(maps) {
-				console.info('%c[socket-io] maps-update', 'font-family: Comic Sans MS; font-size: 14pt; color: blue;');
-				this.maps = maps;
+			this.map = null;
+			socket.on('map-update', (function(map) {
+				console.info('%c[socket-io] map-update', 'font-family: Comic Sans MS; font-size: 14pt; color: blue;');
+				this.map = map;
 			}).bind(this));
 		};
 
-		IOHandler.prototype.getMaps = function() {
-			return this.maps;
+		IOHandler.prototype.getMap = function() {
+			return this.map;
 		};
 
 		IOHandler.prototype.getRotationAndPosition = function() {
