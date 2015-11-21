@@ -4,30 +4,43 @@ body {
 }
 
 #dragger-pointer-starter {
-	fill: gray;
-	stroke: red;
+	fill: #50382E;
+	stroke: #2F0E0E;
 }
 
 #dragger-pointer-ender {
-	fill: gray;
-	stroke: red;
+	fill: #50382E;
+	stroke: #2F0E0E;
 }
 
 #dragger-liner {
 	stroke-width: 5px;
-	stroke: red;
+	stroke: #2F0E0E;
+}
+
+#dragger-liner-pointer {
+	stroke-width: 5px;
+	stroke: #2F0E0E;
+}
+
+#dragger-liner-pointer-ball {
+	stroke-width: 5px;
+	fill: #766E94;
+	stroke: #2E2E69;
 }
 
 #dragger-pointer-ender,
 #dragger-pointer-starter,
-#dragger-liner {
+#dragger-liner, #dragger-liner-pointer,
+#dragger-liner-pointer-ball {
 	transition: 0.8s opacity;
 	opacity: 0;
 }
 
 #dragger-pointer-ender.show,
 #dragger-pointer-starter.show,
-#dragger-liner.show {
+#dragger-liner.show, #dragger-liner-pointer.show,
+#dragger-liner-pointer-ball.show {
 	transition: 0.2s opacity;
 	opacity: 1;
 }
