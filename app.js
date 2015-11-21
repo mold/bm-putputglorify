@@ -30,46 +30,27 @@ app.get('/server', function(req, res) {
     root: __dirname + "/views"
   });
 });
-io.on('connection', function(socket) {
-  var rad = 1;
-  var sphereBody;
-  latestBody = sphereBody = new CANNON.Body({
-    mass: 5, // kg
-    position: new CANNON.Vec3(0, 0, 10), // m
-    shape: new CANNON.Sphere(rad)
-  });
-  world.addBody(sphereBody);
 
-  console.log('Client connected! Id:', socket.id);
-  socket.on("shot-fired", function shotFired(msg) {
-    console.log("Client " + socket.id + " fired!", msg);
-    var powerMultiplier = 10;
-    sphereBody.applyForce(new CANNON.Vec3(msg.deltaX * msg.power * powerMultiplier, msg.deltaY * msg.power * powerMultiplier, 0),
-      new CANNON.Vec3(sphereBody.position.x - rad / 2,
-        sphereBody.position.y - rad / 2,
-        sphereBody.position.z))
-  })
 
-  socket.on("aim-change", function aimChange(msg) {
-    // TODO: do something here
-    // update view etc
-    // console.log(socket.id + " aimed:", msg)
-  })
 
-  io.emit("new-body", {
-    position: sphereBody.position,
-    quaternion: sphereBody.quaternion
-  });
+var map = [
+  [1, 1, 1, 1],
+  [1, 0, 0, 1],
+  [1, 0, 0, 1],
+  [1, 1, 1, 1]
+];
 
-  socket.on('update movement', function(msg) {
-    io.emit('update movement', msg);
-  });
-  socket.on('disconnect', function() {
-    console.log('Client disconnected!');
-    world.removeBody(sphereBody);
-  });
-});
+var tileMap = [
+  [5, 1, 1, 6],
+  [4, 0, 0, 2],
+  [4, 0, 0, 2],
+  [8, 3, 3, 7]
+];
 
+var maps = {
+  map: map,
+  tileMap: tileMap
+};
 
 
 // Server main init
@@ -104,9 +85,9 @@ io.on('connection', function(socket) {
 
     if (io.sockets.sockets) {
       io.sockets.sockets.forEach(function(sock) {
-        sock.emit("bodies", world.bodies.map(function(bod) {
+        sock.emit("bodies", world.bodies.map(function(body) {
           return {
-            position: bod.position,
+            position: body.position,
             quaternion: body.quaternion
           };
         }))
@@ -115,7 +96,41 @@ io.on('connection', function(socket) {
   }, 1000 / 30);
 
 })();
+io.on('connection', function(socket) {
+  // Send maps the first we do
+  io.emit('maps-update', maps);
 
+  var rad = 1;
+  var sphereBody = new CANNON.Body({
+    mass: 5, // kg
+    position: new CANNON.Vec3(0, 0, 10), // m
+    shape: new CANNON.Sphere(rad)
+  });
+  world.addBody(sphereBody);
+
+  console.log('Client connected! Id:', socket.id);
+  socket.on("shot-fired", function shotFired(msg) {
+    console.log("Client " + socket.id + " fired!", msg);
+    sphereBody.applyForce(new CANNON.Vec3(msg.deltaX * msg.power * 10, msg.deltaY * msg.power * 10, 0),
+      new CANNON.Vec3(sphereBody.position.x - rad / 2,
+        sphereBody.position.y - rad / 2,
+        sphereBody.position.z))
+  })
+
+  socket.on("aim-change", function aimChange(msg) {
+    // TODO: do something here
+    // update view etc
+    // console.log(socket.id + " aimed:", msg)
+  })
+
+  socket.on('update movement', function(msg) {
+    io.emit('update movement', msg);
+  });
+  socket.on('disconnect', function() {
+    console.log('Client disconnected!');
+    world.removeBody(sphereBody);
+  });
+});
 http.listen(3004, function() {
   console.log('Listening on port: 3004');
 });
