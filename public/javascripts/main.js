@@ -2,13 +2,13 @@ define(["THREE",
     "RandomEngine",
     "IOHandler",
     "Sprite",
-    "WallSprite",
+    "Dungeon",
     "SocketIO"
 ], function(THREE,
     RandomEngine,
     IOHandler,
     Sprite,
-    WallSprite,
+    Dungeon,
     SocketIO) {
 
     // https://color.adobe.com/create/color-wheel
@@ -50,17 +50,6 @@ define(["THREE",
 
         var cube = new THREE.Mesh(new THREE.CubeGeometry(1, 1, 1), new THREE.MeshNormalMaterial());
 
-        var types = {
-            1: "top",
-            2: "right",
-            3: "bottom",
-            4: "left",
-            5: "top-left",
-            6: "top-right",
-            7: "bottom-right",
-            8: "bottom-left"
-        };
-
         var walls = [];
         var character;
 
@@ -80,12 +69,11 @@ define(["THREE",
             images[fname] = img;
         }
 
-        imgLoader.load("sprites/dawnlike/Characters/Reptile1.png", imageLoaded);
-        imgLoader.load("sprites/dawnlike/Objects/Wall.png", imageLoaded);
+        imgLoader.load("sprites/sprite_map.png", imageLoaded);
 
         scene.add(topObj);
 
-        camera.position.z = 10;
+        camera.position.z = 11;
         camera.position.y = 0;
 
         var resizeHandler = function(event) {
@@ -96,27 +84,22 @@ define(["THREE",
 
         var loaded = false;
 
-        var load = function() {
-            // add map
-            var map = iohandler.maps.map;
-            var tileMap = iohandler.maps.tileMap;
-            for (var i = 0; i < map.length; i++) {
-                for (var j = 0; j < map[i].length; j++) {
-                    if (map[i][j] != 0) {
-                        var wall = new WallSprite(images.Wall, types[tileMap[i][j]]);
-                        wall._x = j - map[i].length / 2 + 0.5;
-                        wall._y = map.length / 2 - i;
-                        wall.position.set(wall._x, wall._y, 0);
-                        wall.setSize(1, 1);
-                        topObj.add(wall);
-                        walls.push(wall);
-                    }
-                }
-            }
+        var map;
+
+        var load = function(offset) {
+            while (topObj.children.length > 0)
+                topObj.remove(topObj.children[0]);
+
+            var map = iohandler.getMap();
+
+            var dungeon = new Dungeon(images.sprite_map, map);
+            dungeon.position.set(-map[0].length / 2, map.length / 2 - 1, 0);
+            topObj.add(dungeon);
+            console.log(dungeon);
 
             // add character
-            character = new Sprite(images.Reptile1, images.Reptile1.width, images.Reptile1.height, 16, 16);
-            character.setTile(8 * 11 + 1);
+            character = new Sprite(images.sprite_map, images.sprite_map.width, images.sprite_map.height, 16, 16);
+            character.setTile(16 * 12 + 1);
             character.setSize(1, 1);
             topObj.add(character);
         }
@@ -141,7 +124,7 @@ define(["THREE",
         var ang = 0;
         var loop = function() {
 
-            if (!loaded && imagesLoaded && iohandler.maps) {
+            if (!loaded && imagesLoaded && iohandler.getMap()) {
                 load();
                 loaded = true;
             }
@@ -155,11 +138,11 @@ define(["THREE",
             var deltaTime = clock.getDelta();
 
             for (var i = 0; i < walls.length; i++) {
-                walls[i].position.set(walls[i]._x + Math.random() * deltaTime * 2, walls[i]._y + Math.random() * deltaTime * 2, 0);
+                //walls[i].position.set(walls[i]._x + Math.random() * deltaTime * 2, walls[i]._y + Math.random() * deltaTime * 2, 0);
             }
 
             if (character) {
-                // character.position.set(Math.cos(ang) * 0.5 - 0.5, Math.sin(ang) * 0.5 + 0.5, 0);
+                character.position.set(Math.cos(ang) * 0.5, Math.sin(ang) * 0.5 + 0.5, 0);
                 character.rotation.setFromQuaternion(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 0, 1), ang));
             }
             ang += Math.PI * deltaTime;
