@@ -5,6 +5,7 @@ var io = require('socket.io')(http);
 var CANNON = require('cannon');
 var gameloop = require('node-gameloop');
 var world = new CANNON.World();
+var latestBody;
 
 app.use("/scripts", express.static(__dirname + "/public/javascripts"));
 app.use("/styles", express.static(__dirname + "/public/stylesheets"));
@@ -45,24 +46,45 @@ var tileMap = [
   [4, 0, 0, 2],
   [8, 3, 3, 7]
 ];
+var bodyMap = [];
 
 var maps = {
   map: map,
   tileMap: tileMap
 };
 
+var initWorldBodiesFromMap = function() {
+  for (var i = 0; i < map.length; i++) {
+    bodyMap.push([]);
+    for (var j = map[0].length - 1; j >= 0; j--) {
+      var elem = map[i][j];
+      if (0 != elem) {
+        var elemBody = new CANNON.Body({
+          mass: 0, // static
+          position: new CANNON.Vec3(i, 0.5, j),
+          shape: new CANNON.Box(new CANNON.Vec3(0.5, 0.5, 0.5))
+        });
+
+        world.addBody(elemBody);
+        bodyMap[i].push(elemBody);
+      }
+      bodyMap[i].push(null);
+    };
+  }
+};
 
 // Server main init
 (function() {
 
   // Setup our world
-  world.gravity.set(0, 0, -9.82); // m/s²
+  world.gravity.set(0, -9.82, 0); // m/s²
+  initWorldBodiesFromMap();
 
   // Create a sphere
   var radius = 1; // m
   var sphereBody = new CANNON.Body({
     mass: 5, // kg
-    position: new CANNON.Vec3(0, 0, 10), // m
+    position: new CANNON.Vec3(0, 10, 0), // m
     shape: new CANNON.Sphere(radius)
   });
   world.addBody(sphereBody);
@@ -81,13 +103,20 @@ var maps = {
   // Start the physics simulation loop
   gameloop.setGameLoop(function(delta) {
     world.step(fixedTimeStep, delta, maxSubSteps);
+
+    if (io.sockets.sockets) {
+      io.sockets.sockets.forEach(function(sock) {
+        sock.emit("bodies", world.bodies.map(function(body) {
+          return {
+            position: body.position,
+            quaternion: body.quaternion
+          };
+        }))
+      })
+    }
   }, 1000 / 30);
 
 })();
-
-
-// Setup socket.io connections
-
 io.on('connection', function(socket) {
   // Send maps the first we do
   io.emit('maps-update', maps);
@@ -95,7 +124,7 @@ io.on('connection', function(socket) {
   var rad = 1;
   var sphereBody = new CANNON.Body({
     mass: 5, // kg
-    position: new CANNON.Vec3(0, 0, 10), // m
+    position: new CANNON.Vec3(0, 10, 0), // m
     shape: new CANNON.Sphere(rad)
   });
   world.addBody(sphereBody);
@@ -123,10 +152,6 @@ io.on('connection', function(socket) {
     world.removeBody(sphereBody);
   });
 });
-
-
-
-// Serve http forever and ever
 http.listen(3004, function() {
   console.log('Listening on port: 3004');
 });
