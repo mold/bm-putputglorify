@@ -30,17 +30,7 @@ app.get('/server', function(req, res) {
 });
 
 io.on('connection', function(socket) {
-  console.log('Client connected! Id:', socket.id);
-  socket.on("shot-fired", function shotFired(msg) {
-    console.log("Client " + socket.id + " fired!", msg);
-  })
-
-  socket.on("aim-change", function aimChange(msg) {
-    // TODO: do something here
-    // update view etc
-    // console.log(socket.id + " aimed:", msg)
-  })
-
+  console.log('Client connected!');
   socket.on('update movement', function(msg) {
     io.emit('update movement', msg);
   });

@@ -21,6 +21,7 @@ app.get('/client', function(req, res) {
   res.sendFile("client.html", {
     root: __dirname + "/views"
   });
+<<<<<<< HEAD
 });
 
 app.get('/server', function(req, res) {
@@ -30,17 +31,21 @@ app.get('/server', function(req, res) {
 });
 
 io.on('connection', function(socket) {
+  console.log('Client connected!');
+=======
+});
+
+io.on('connection', function(socket) {
   console.log('Client connected! Id:', socket.id);
   socket.on("shot-fired", function shotFired(msg) {
     console.log("Client " + socket.id + " fired!", msg);
   })
-
   socket.on("aim-change", function aimChange(msg) {
     // TODO: do something here
     // update view etc
     // console.log(socket.id + " aimed:", msg)
   })
-
+>>>>>>> f528ccfe630d50dade4c0de802740e6cd4541642
   socket.on('update movement', function(msg) {
     io.emit('update movement', msg);
   });
@@ -49,6 +54,7 @@ io.on('connection', function(socket) {
   });
 });
 
+<<<<<<< HEAD
 
 var world = new CANNON.World();
 
@@ -85,6 +91,8 @@ var world = new CANNON.World();
 
 })();
 
+=======
+>>>>>>> f528ccfe630d50dade4c0de802740e6cd4541642
 http.listen(3004, function() {
   console.log('Listening on port: 3004');
 });

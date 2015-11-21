@@ -1,7 +1,27 @@
 {
-  "name": "agi15-proj-2",
-  "version": "0.0.1",
-  "description": "The second project in AGI15. Uses mobile phones to aim a gun.",
+  "name": "putputglorify",
+  "version": "1.0.0",
+  "description": "it's in the name",
+  "main": "client/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mold/bm-putputglorify.git"
+  },
+  "keywords": [
+    "game",
+    "bluemoon",
+    "wow"
+  ],
+  "author": "BLUEMOON",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/mold/bm-putputglorify/issues"
+  },
+  "homepage": "https://github.com/mold/bm-putputglorify#readme",
+  "private": true,
   "dependencies": {
     "cannon": "^0.6.2",
     "express": "^4.13.3",
