@@ -3,11 +3,13 @@
 	var socket = io();
 	var MAX_DIMENSION = Math.max($(window).width(), $(window).height());
 	var MIN_DIMENSION = Math.min($(window).width(), $(window).height());
-	var MAX_DISTANCE = MIN_DIMENSION * 0.8;
+	var MAX_DISTANCE = MIN_DIMENSION * 0.6;
 
 	var dpStart = $("#dragger-pointer-starter"),
 		dpLine = $("#dragger-liner"),
-		dpEnd = $("#dragger-pointer-ender");
+		dpPointerLine = $("#dragger-liner-pointer"),
+		dpEnd = $("#dragger-pointer-ender"),
+		dpPointerLineBall = $("#dragger-liner-pointer-ball");
 
 	var startX, startY;
 
@@ -36,7 +38,7 @@
 
 	function onPan(evt) {
 		// console.log(evt);
-		evt.preventDefault();
+		evt.preventDefault(); // // gotta do this so we don't refresh 
 		var correctX = evt.center.x,
 			correctY = evt.center.y;
 
@@ -53,9 +55,13 @@
 			correctY = startY + MAX_DISTANCE * Math.sin(angle);
 		}
 
+		var power = Math.min(evt.distance, MAX_DISTANCE) / MAX_DISTANCE;
+
 		dpEnd.attr({
 			cx: correctX,
-			cy: correctY
+			cy: correctY,
+			rx: 20 + 80 * power,
+			ry: 20 + 80 * power,
 		})
 
 		dpLine.attr({
@@ -65,25 +71,48 @@
 			y2: correctY,
 		})
 
+		dpPointerLine.attr({
+			x1: startX,
+			y1: startY,
+			x2: startX + (startX - correctX),
+			y2: startY + (startY - correctY),
+		})
+
+		dpPointerLineBall.attr({
+			cx: startX + (startX - correctX),
+			cy: startY + (startY - correctY),
+			rx: 10,
+			ry: 10,
+		})
+
 		if (evt.isFinal) {
 			// send shot!!! it's done!!!
-			dpStart.add(dpEnd).add(dpLine).attr({
-				class: ""
-			});
+			dpStart.add(dpEnd).add(dpLine).add(dpPointerLine).add(dpPointerLineBall)
+				.attr({
+					class: ""
+				});
+
+			socket.emit("shot-fired", {
+				power: power,
+				angle: evt.angle,
+				deltaX: correctX - startX,
+				deltaY: correctY - startY,
+			})
 
 			startX = startY = null;
 
-			socket.emit("shot-fired", {
-				power: Math.min(evt.distance, MAX_DISTANCE) / MAX_DISTANCE,
-				angle: evt.angle,
-			})
-
-		} else if (evt.isFirst) {
-			onPress(evt);
 		} else {
-			dpEnd.add(dpLine).attr({
-				class: "show"
-			});
+			dpEnd.add(dpLine).add(dpPointerLine).add(dpPointerLineBall)
+				.attr({
+					class: "show"
+				});
+
+			socket.emit("aim-change", {
+				power: power,
+				angle: evt.angle,
+				deltaX: correctX - startX,
+				deltaY: correctY - startY,
+			})
 		}
 	}
 
