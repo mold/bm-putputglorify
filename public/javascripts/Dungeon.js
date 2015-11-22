@@ -1,12 +1,14 @@
 define([
     "THREE",
-    "Wall"
+    "Wall",
+    "AssetManager"
 ], function(
     THREE,
-    Wall
+    Wall,
+    AssetManager
 ) {
 
-    function Dungeon(img, map) {
+    function Dungeon(map) {
         THREE.Mesh.call(this);
 
         var geometry = new THREE.Geometry();
@@ -51,12 +53,25 @@ define([
             }
         }
 
-        var texture = new THREE.Texture(img);
+        var texture = new THREE.Texture(AssetManager.images.sprite_map);
         texture.magFilter = THREE.NearestFilter;
         texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
-        var material = new THREE.MeshBasicMaterial({
+        /*var material = new THREE.MeshBasicMaterial({
             map: texture,
             transparent: true
+        });*/
+        var uniforms = THREE.UniformsUtils.clone(
+            THREE.UniformsLib["lights"]);
+        uniforms.spritemap = {
+            type: "t",
+            value: texture
+        };
+        console.log(uniforms)
+        var material = new THREE.ShaderMaterial({
+            uniforms: uniforms,
+            vertexShader: AssetManager.shaders.dungeon_vertex_shader,
+            fragmentShader: AssetManager.shaders.dungeon_fragment_shader,
+            lights: true
         });
         texture.needsUpdate = true;
 

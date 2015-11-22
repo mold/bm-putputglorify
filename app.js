@@ -13,6 +13,7 @@ var RandomEngine = new MersenneTwister(40);
 app.use("/scripts", express.static(__dirname + "/public/javascripts"));
 app.use("/styles", express.static(__dirname + "/public/stylesheets"));
 app.use("/sprites", express.static(__dirname + "/public/sprites"));
+app.use("/shaders", express.static(__dirname + "/public/shaders"));
 app.use("/views", express.static(__dirname + "/views"));
 app.use("/server", express.static(__dirname + "/server"));
 
