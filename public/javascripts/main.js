@@ -38,6 +38,8 @@ define([
 
     window.paused = false;
 
+    var LERP_FRACTION = 1.0 / 6.0; /* 0 < LERP_FRACTION <= 1.0 */
+
     window.addEventListener('resize', resizeHandler, false);
 
     socket.on("new-body", function(body) {
@@ -53,13 +55,14 @@ define([
                 pos.x = Math.floor(pos.x * 16) / 16;
                 pos.y = Math.floor(pos.y * 16) / 16;
                 //console.log(pos);
-                character.position.set(pos.x + 1, -pos.y + 0.5, pos.z);
-                character.quaternion = bodies[body].quaternion;
+                character.targetPosition = new THREE.Vector3(pos.x + 1, -pos.y + 0.5, pos.z);
+                var q = bodies[body].quaternion;
+                character.targetQuaternion = new THREE.Quaternion(q.x, q.y, q.z, q.w);
                 b++;
             }
             //console.log("bodies", b);
         }
-    })
+    });
 
     socket.on("map-update", load);
     AssetManager.onLoad(init);
@@ -127,7 +130,14 @@ define([
             var scale = 1.2 + 0.4 * Math.cos(ang * 2);
             character.scale.set(scale, scale, scale);
             character.position.set(x, y, 0);
-        }*/
+         }*/
+
+        if (character) {
+            if (character.targetPosition)
+                character.position.lerp(character.targetPosition, LERP_FRACTION);
+            if (character.targetQuaternion)
+                character.quaternion = character.targetQuaternion;
+        }
 
         ang += deltaTime * Math.PI * 1 / 2;
 

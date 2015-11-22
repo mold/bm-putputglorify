@@ -125,7 +125,7 @@ var initWorldBodiesFromMap = function() {
     if (io.sockets.sockets) {
       io.sockets.sockets.forEach(function(sock) {
         sock.emit("bodies", clientData);
-      })
+      });
     }
   }, 1000 / 30);
 
@@ -168,13 +168,13 @@ io.on('connection', function(socket) {
       new CANNON.Vec3(sphereBody.position.x - rad / 2,
         sphereBody.position.y - rad / 2,
         sphereBody.position.z));
-  })
+  });
 
   socket.on("aim-change", function aimChange(msg) {
     // TODO: do something here
     // update view etc
     // console.log(socket.id + " aimed:", msg)
-  })
+  });
 
   socket.on('update movement', function(msg) {
     io.emit('update movement', msg);
