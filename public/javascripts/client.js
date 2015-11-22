@@ -97,8 +97,8 @@
 			socket.emit("shot-fired", {
 				power: power,
 				angle: evt.angle,
-				deltaX: correctX - startX,
-				deltaY: correctY - startY,
+				deltaX: -(correctX - startX),
+				deltaY: -(correctY - startY),
 			})
 
 			startX = startY = null;

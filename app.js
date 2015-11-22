@@ -7,6 +7,7 @@ var gameloop = require('node-gameloop');
 var MersenneTwister = require(__dirname + '/public/javascripts/lib/mersenne-twister.js');
 var world = new CANNON.World();
 var latestBody;
+var groundMaterial;
 
 var RandomEngine = new MersenneTwister(40);
 
@@ -35,18 +36,32 @@ app.get('/server', function(req, res) {
   });
 });
 
-
-var w = 16;
-var h = 16;
-var map = new Array(h);
-for (var i = 0; i < map.length; i++) {
+var map = [
+  [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+  [1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1],
+  [1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1],
+  [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+  [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+  [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+  [1, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0, 0, 1],
+  [1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+  [1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+  [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+];
+var w = map[0].length;
+var h = map.length;
+//var map = new Array(h);
+/*for (var i = 0; i < map.length; i++) {
   map[i] = new Array(w);
   for (var j = 0; j < map[0].length; j++) {
     map[i][j] = Math.round(0.2 + RandomEngine.random() * 0.8);
   }
-}
+}*/
 
 var bodyMap = [];
+
+var players = {};
+var clientData = {};
 
 var initWorldBodiesFromMap = function() {
   for (var i = 0; i < map.length; i++) {
@@ -56,8 +71,8 @@ var initWorldBodiesFromMap = function() {
       if (0 != elem) {
         var elemBody = new CANNON.Body({
           mass: 0, // static
-          position: new CANNON.Vec3(i, 0.5, j),
-          shape: new CANNON.Box(new CANNON.Vec3(0.5, 0.5, 0.5))
+          position: new CANNON.Vec3(j, i, 0),
+          shape: new CANNON.Box(new CANNON.Vec3(0.5, 0.5, 10.5))
         });
 
         world.addBody(elemBody);
@@ -72,25 +87,33 @@ var initWorldBodiesFromMap = function() {
 (function() {
 
   // Setup our world
-  world.gravity.set(0, -9.82, 0); // m/s²
+  world = new CANNON.World();
+  world.gravity.set(0, 0, -20); // m/s²
+  //world.broadphase = new CANNON.NaiveBroadphase();
+
   initWorldBodiesFromMap();
 
-  // Create a sphere
-  var radius = 1; // m
-  var sphereBody = new CANNON.Body({
-    mass: 5, // kg
-    position: new CANNON.Vec3(0, 10, 0), // m
-    shape: new CANNON.Sphere(radius)
-  });
-  world.addBody(sphereBody);
-
   // Create a plane
+  groundMaterial = new CANNON.Material();
   var groundBody = new CANNON.Body({
-    mass: 0 // mass == 0 makes the body static
+    mass: 0, // mass == 0 makes the body static
+    material: groundMaterial
   });
   var groundShape = new CANNON.Plane();
   groundBody.addShape(groundShape);
   world.addBody(groundBody);
+
+  // Create a sphere
+  /*var radius = 1; // m
+  var material = new CANNON.Material();
+  var sphereBody = new CANNON.Body({
+    mass: 5, // kg
+    material: material,
+    linearDamping: 0.01,
+    position: new CANNON.Vec3(8, 8, -100), // m
+    shape: new CANNON.Sphere(radius)
+  });
+  world.addBody(sphereBody);*/
 
   var fixedTimeStep = 1.0 / 60.0; // seconds
   var maxSubSteps = 3;
@@ -101,12 +124,7 @@ var initWorldBodiesFromMap = function() {
 
     if (io.sockets.sockets) {
       io.sockets.sockets.forEach(function(sock) {
-        sock.emit("bodies", world.bodies.map(function(body) {
-          return {
-            position: body.position,
-            quaternion: body.quaternion
-          };
-        }))
+        sock.emit("bodies", clientData);
       })
     }
   }, 1000 / 30);
@@ -116,21 +134,40 @@ io.on('connection', function(socket) {
   // Send map the first we do
   io.emit('map-update', map);
 
-  var rad = 1;
+  var rad = 0.5;
+  var material = new CANNON.Material();
   var sphereBody = new CANNON.Body({
     mass: 5, // kg
-    position: new CANNON.Vec3(0, 10, 0), // m
-    shape: new CANNON.Sphere(rad)
+    position: new CANNON.Vec3(w / 2, h / 2, 1.5), // m
+    shape: new CANNON.Sphere(rad),
+    material: material,
+    linearDamping: 0.01
   });
   world.addBody(sphereBody);
+
+  var material_ground = new CANNON.ContactMaterial(groundMaterial, material, {
+    friction: 0.2,
+    restitution: 0.3
+  });
+  world.addContactMaterial(material_ground);
+
+  players[socket.id] = {
+    body: sphereBody
+  };
+
+  clientData[socket.id] = {
+    position: sphereBody.position,
+    quaternion: sphereBody.quaternion
+  };
 
   console.log('Client connected! Id:', socket.id);
   socket.on("shot-fired", function shotFired(msg) {
     console.log("Client " + socket.id + " fired!", msg);
-    sphereBody.applyForce(new CANNON.Vec3(msg.deltaX * msg.power * 10, msg.deltaY * msg.power * 10, 0),
+    var sphereBody = players[socket.id].body;
+    sphereBody.applyForce(new CANNON.Vec3(msg.deltaX * msg.power * 20, msg.deltaY * msg.power * 20, 0),
       new CANNON.Vec3(sphereBody.position.x - rad / 2,
         sphereBody.position.y - rad / 2,
-        sphereBody.position.z))
+        sphereBody.position.z));
   })
 
   socket.on("aim-change", function aimChange(msg) {
@@ -145,6 +182,8 @@ io.on('connection', function(socket) {
   socket.on('disconnect', function() {
     console.log('Client disconnected!');
     world.removeBody(sphereBody);
+    delete players[socket.id];
+    delete clientData[socket.id];
   });
 });
 http.listen(3004, function() {

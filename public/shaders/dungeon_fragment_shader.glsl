@@ -22,6 +22,6 @@ void main() {
     }
     addedLights = addedLights/float(MAX_POINT_LIGHTS);
     dist = dist/float(MAX_POINT_LIGHTS);
-    float light = 1.0-floor(dist*6.0)/6.0;
+    float light = 1.0-floor(dist*20.0)/20.0;
     gl_FragColor = texture2D(spritemap, vUv)*(vec4(1.0,1.0,1.0,1.0)*(1.0-light)+vec4(addedLights, 1.0)*light)*(0.2+0.8*light);// * vec4(addedLights, 1.0);
 }

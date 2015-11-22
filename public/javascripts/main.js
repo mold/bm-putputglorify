@@ -46,8 +46,19 @@ define([
     });
 
     socket.on("bodies", function(bodies) {
-        // var pos = bodies[0];
-        // character.position.set(pos.x, pos.y, pos.z)
+        if (character) {
+            var b = 0;
+            for (body in bodies) {
+                var pos = bodies[body].position;
+                pos.x = Math.floor(pos.x * 16) / 16;
+                pos.y = Math.floor(pos.y * 16) / 16;
+                //console.log(pos);
+                character.position.set(pos.x + 1, -pos.y + 0.5, pos.z);
+                character.quaternion = bodies[body].quaternion;
+                b++;
+            }
+            //console.log("bodies", b);
+        }
     })
 
     socket.on("map-update", load);
@@ -107,7 +118,7 @@ define([
 
         var deltaTime = clock.getDelta();
 
-        if (map) {
+        /*if (map) {
             var x = Math.cos(ang) * 4 + map[0].length / 2;
             var y = Math.cos(ang * 0.35678) * 4 - map.length / 2;
             // 16 pixels per tile
@@ -116,7 +127,7 @@ define([
             var scale = 1.2 + 0.4 * Math.cos(ang * 2);
             character.scale.set(scale, scale, scale);
             character.position.set(x, y, 0);
-        }
+        }*/
 
         ang += deltaTime * Math.PI * 1 / 2;
 

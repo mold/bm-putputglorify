@@ -43,13 +43,11 @@ define([
         var vertexOffset = 0;
         for (var i = 0; i < map.length; i++) {
             for (var j = 0; j < map[i].length; j++) {
-                if (map[i][j] != 0) {
-                    var wall = new Wall(j, -i, tileMap[i][j], vertexOffset);
-                    geometry.vertices = geometry.vertices.concat(wall.vertices);
-                    geometry.faces = geometry.faces.concat(wall.faces);
-                    geometry.faceVertexUvs[0] = geometry.faceVertexUvs[0].concat(wall.faceVertexUvs);
-                    vertexOffset += 4;
-                }
+                var wall = new Wall(j, -i, tileMap[i][j], vertexOffset);
+                geometry.vertices = geometry.vertices.concat(wall.vertices);
+                geometry.faces = geometry.faces.concat(wall.faces);
+                geometry.faceVertexUvs[0] = geometry.faceVertexUvs[0].concat(wall.faceVertexUvs);
+                vertexOffset += 4;
             }
         }
 
