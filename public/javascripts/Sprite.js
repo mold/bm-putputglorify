@@ -25,7 +25,7 @@ define([
         this.spriteWidth = spriteWidth;
         this.spriteHeight = spriteHeight;
         var geometry = new THREE.PlaneGeometry(1, 1);
-        geometry.applyMatrix(new THREE.Matrix4().makeTranslation(-0.5,0, 0));
+        geometry.applyMatrix(new THREE.Matrix4().makeTranslation(0, 0, 0));
         this.cols = image.width / spriteWidth;
         this.rows = image.height / spriteHeight;
         var texture = new THREE.Texture(image);
