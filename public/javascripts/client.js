@@ -1,6 +1,6 @@
 ;
 (function() {
-	var socket = io();
+	var socket = io.connect(location.href);
 	var MAX_DIMENSION = Math.max($(window).width(), $(window).height());
 	var MIN_DIMENSION = Math.min($(window).width(), $(window).height());
 	var MAX_DISTANCE = MIN_DIMENSION * 0.6;

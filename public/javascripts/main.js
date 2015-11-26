@@ -19,14 +19,13 @@ define([
     var iohandler = new IOHandler();
     var socket = new SocketIO();
 
+    var dungeon = null;
     var scene = new THREE.Scene();
     var clock = new THREE.Clock();
 
     var camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
     camera.position.z = 11;
     camera.position.y = 0;
-
-    var light = new THREE.PointLight(0xFFF6BB, 1.0, 5.0);
 
     var renderer = new THREE.WebGLRenderer();
     var bgColor = 0x332222;
@@ -35,32 +34,44 @@ define([
 
     var map;
     var character;
+    var characters = {};
+    window.characters = characters;
 
     window.paused = false;
+    var debug = document.getElementById("debug");
 
     var LERP_FRACTION = 1.0 / 6.0; /* 0 < LERP_FRACTION <= 1.0 */
 
     window.addEventListener('resize', resizeHandler, false);
 
-    socket.on("new-body", function(body) {
-        // character.position.set(body.position)
+    socket.on("body-create", function(body) {
+        console.info("client connected");
+    });
 
+    socket.on("body-destroy", function(body) {
+        console.info("client disconnected", body, characters);
+        dungeon.remove(characters[body.id]);
+        delete characters[body.id];
     });
 
     socket.on("bodies", function(bodies) {
-        if (character) {
+        if (dungeon) {
             var b = 0;
-            for (body in bodies) {
-                var pos = bodies[body].position;
-                pos.x = Math.floor(pos.x * 16) / 16;
-                pos.y = Math.floor(pos.y * 16) / 16;
-                //console.log(pos);
-                character.targetPosition = new THREE.Vector3(pos.x + 1, -pos.y + 0.5, pos.z);
-                var q = bodies[body].quaternion;
-                character.targetQuaternion = new THREE.Quaternion(q.x, q.y, q.z, q.w);
-                b++;
+            var coords = [];
+            for (i in bodies) {
+                var body = bodies[i];
+                var ch = characters[body.id];
+                if (!ch) {
+                    var ch = createCharacter();
+                    characters[body.id] = ch;
+                    dungeon.add(ch);
+                }
+                ch.position.set(body.x + 0.5, -body.y + 0.5, 0);
+                ch.quaternion.setFromAxisAngle(new THREE.Vector3(0, 0, 1), body.angle);
+
+                coords.push('( ' + (Math.floor(10 * body.x) / 10) + ' , ' + (Math.floor(10 * body.y) / 10) + ' )');
             }
-            //console.log("bodies", b);
+            debug.innerHTML = coords.join(' ');
         }
     });
 
@@ -70,6 +81,15 @@ define([
     resizeHandler();
 
     ///////////////////////////
+
+    function createCharacter() {
+        // add character
+        var img = AssetManager.images.sprite_map;
+        ch = new Sprite(img, img.width, img.height, 16, 16);
+        ch.setTile(16 * 12 + 1);
+        ch.setSize(1, 1);
+        return ch;
+    }
 
     function resizeHandler(event) {
         camera.aspect = window.innerWidth / window.innerHeight;
@@ -87,18 +107,17 @@ define([
 
         map = iohandler.getMap();
 
-        var dungeon = new Dungeon(map);
+        dungeon = new Dungeon(map);
         dungeon.position.set(-map[0].length / 2, map.length / 2 - 1, 0);
         scene.add(dungeon);
 
-        // add character
-        var img = AssetManager.images.sprite_map;
-        character = new Sprite(img, img.width, img.height, 16, 16);
-        character.setTile(16 * 12 + 1);
-        character.setSize(1, 1);
-        dungeon.add(character);
+        for (var i in characters)
+            dungeon.add(characters[i]);
 
-        character.add(light);
+        // TODO: the light shader is broken, don't add more lights!
+        var light = new THREE.PointLight(0xFFF6BB, 1.0, 7.0);
+        light.position.set(map[0].length / 2 + 0.5, -map.length / 2 + 1, 0);
+        dungeon.add(light);
     }
 
     function init() {
@@ -120,24 +139,6 @@ define([
         }
 
         var deltaTime = clock.getDelta();
-
-        /*if (map) {
-            var x = Math.cos(ang) * 4 + map[0].length / 2;
-            var y = Math.cos(ang * 0.35678) * 4 - map.length / 2;
-            // 16 pixels per tile
-            x = Math.floor(x * 16) / 16;
-            y = Math.floor(y * 16) / 16;
-            var scale = 1.2 + 0.4 * Math.cos(ang * 2);
-            character.scale.set(scale, scale, scale);
-            character.position.set(x, y, 0);
-         }*/
-
-        if (character) {
-            if (character.targetPosition)
-                character.position.lerp(character.targetPosition, LERP_FRACTION);
-            if (character.targetQuaternion)
-                character.quaternion = character.targetQuaternion;
-        }
 
         ang += deltaTime * Math.PI * 1 / 2;
 
