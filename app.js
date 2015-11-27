@@ -80,7 +80,7 @@ var initWorldBodiesFromMap = function() {
         var bodyDef = new Box2D.b2BodyDef();
         bodyDef.set_position(new Box2D.b2Vec2(j, i));
         var body = world.CreateBody(bodyDef);
-        body.CreateFixture(shape, 5.0);
+        body.CreateFixture(shape, 5.0); // density 5
 
         bodyMap[i].push(body);
       }
@@ -160,13 +160,13 @@ io.of('/client').on('connection', function(socket) {
   var bodyDef = new Box2D.b2BodyDef();
   bodyDef.set_type(Box2D.b2_dynamicBody);
   bodyDef.set_position(new Box2D.b2Vec2(w / 2, h / 2));
-  bodyDef.friction = 0.9;
-  bodyDef.density = 1;
-  bodyDef.restitution = 1;
-  bodyDef.linearDamping = 1;
-  bodyDef.angularDamping = 1;
+  var fixDef = new Box2D.b2FixtureDef();
+  fixDef.set_density(5.0);
+  fixDef.set_friction(0.5);
+  fixDef.set_restitution(0.7); // bounciness - higher is bouncier
+  fixDef.set_shape(shape);
   var body = world.CreateBody(bodyDef);
-  body.CreateFixture(shape, 5.0);
+  body.CreateFixture(fixDef);
 
   players[socket.id] = {
     body: body
