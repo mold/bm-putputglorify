@@ -30,6 +30,10 @@
 			time: 0,
 		})
 
+		socket.on("connected", function(data) {
+			$("body").css("background", "#" + data.color.toString(16));
+		})
+
 		// // gotta do this so we don't refresh 
 		// $(document.body).on("touchstart", function(event) {
 		// 	event.preventDefault();

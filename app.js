@@ -6,6 +6,7 @@ var b2 = require('box2d.js');
 var Box2D = b2.Box2D;
 var gameloop = require('node-gameloop');
 var MersenneTwister = require(__dirname + '/public/javascripts/lib/mersenne-twister.js');
+var THREE = require('three');
 
 var latestBody;
 var groundMaterial;
@@ -65,6 +66,35 @@ var bodyMap = [];
 var destroy_list = [];
 var players = {};
 var clientData = {};
+
+var colors = [];
+
+(function() {
+  // create a bunch of colors
+  var c = new THREE.Color();
+  var ncolors = 6;
+  var nvalues = 2;
+  for (var j = 0; j < nvalues; j++) {
+    for (var i = 0; i < ncolors; i++) {
+      c.setHSL((i + j / nvalues) / ncolors, 0.8, 0.6 - 0.4 * j / nvalues);
+      colors.push(c.getHex());
+    }
+  }
+})();
+
+function getNewClientColor() {
+  if (colors.length > 0) {
+    return colors.splice(0, 1)[0];
+  } else {
+    // fallback
+    console.log("No colors left");
+    return Math.floor(Math.random() * 0xFFFFFF);
+  }
+}
+
+function releaseClientColor(c) {
+  colors.unshift(c);
+}
 
 var initWorldBodiesFromMap = function() {
   // create a rectangle for each wall piece
@@ -163,7 +193,7 @@ io.of('/client').on('connection', function(socket) {
   bodyDef.set_type(Box2D.b2_dynamicBody);
   bodyDef.set_position(new Box2D.b2Vec2(w / 2, h / 2));
   var fixDef = new Box2D.b2FixtureDef();
-  fixDef.set_density(5.0);
+  fixDef.set_density(7.0);
   fixDef.set_friction(0.5);
   fixDef.set_restitution(0.7); // bounciness - higher is bouncier
   fixDef.set_shape(shape);
@@ -172,13 +202,16 @@ io.of('/client').on('connection', function(socket) {
 
   players[socket.id] = {
     body: body,
+    color: getNewClientColor(),
     aiming: false
   };
 
   clientData[socket.id] = {
     id: socket.id,
     body: body,
-    aim: -1
+    color: players[socket.id].color,
+    aim: -1,
+    aimPower: 0
   };
 
   // tell everybody!
@@ -186,9 +219,11 @@ io.of('/client').on('connection', function(socket) {
     sock.emit("body-create", clientData[socket.id]);
   });
 
+  // send a message to the client
+  socket.emit("connected", clientData[socket.id]);
+
   console.log('Client connected! Id:', socket.id);
   socket.on("shot-fired", function shotFired(msg) {
-    console.log("Client " + socket.id + " fired!", msg);
     var body = players[socket.id].body;
     body.ApplyForce(new Box2D.b2Vec2(msg.deltaX * msg.power * 20, msg.deltaY * msg.power * 20), body.GetWorldCenter());
 
@@ -200,6 +235,7 @@ io.of('/client').on('connection', function(socket) {
       players[socket.id].aiming = true;
     }
     clientData[socket.id].aim = msg.angle;
+    clientData[socket.id].aimPower = msg.power;
   });
 
   socket.on('update movement', function(msg) {
@@ -211,7 +247,9 @@ io.of('/client').on('connection', function(socket) {
       sock.emit("body-destroy", clientData[socket.id]);
     });
     console.log('Client disconnected!');
-    destroy_list.push(players[socket.id].body);
+    var player = players[socket.id];
+    destroy_list.push(player.body);
+    releaseClientColor(player.color);
     delete players[socket.id];
     delete clientData[socket.id];
 
