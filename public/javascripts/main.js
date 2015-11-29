@@ -69,7 +69,17 @@ define([
                 ch.position.set(body.x + 0.5, -body.y + 0.5, 0);
                 ch.quaternion.setFromAxisAngle(new THREE.Vector3(0, 0, 1), body.angle);
 
-                coords.push('( ' + (Math.floor(10 * body.x) / 10) + ' , ' + (Math.floor(10 * body.y) / 10) + ' )');
+                if (body.aim >= 0) {
+                    var angle = body.angle - (Math.PI - body.aim);
+                    ch.aim.visible = true;
+                    ch.aim.position.set(Math.cos(angle), -Math.sin(angle), 0);
+                    //angle = body.angle + (Math.PI - body.aim);
+                    ch.aim.quaternion.setFromAxisAngle(new THREE.Vector3(0, 0, 1), Math.PI * 3 / 2 - angle);
+                } else {
+                    ch.aim.visible = false;
+                }
+
+                coords.push('( ' + (Math.floor(10 * body.x) / 10) + ' , ' + (Math.floor(10 * body.y) / 10) + ' , ' + (Math.floor(10 * body.aim) / 10) + ' )');
             }
             debug.innerHTML = coords.join(' ');
         }
@@ -88,6 +98,13 @@ define([
         ch = new Sprite(img, img.width, img.height, 16, 16);
         ch.setTile(16 * 12 + 1);
         ch.setSize(1, 1);
+
+        ch.aim = new Sprite(img, img.width, img.height, 16, 16);
+        ch.aim.setTile(16 * 12 + 3);
+        ch.aim.setSize(1, 1);
+        ch.aim.visible = false;
+        ch.add(ch.aim);
+
         return ch;
     }
 

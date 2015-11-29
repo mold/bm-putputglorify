@@ -108,6 +108,7 @@ var initWorldBodiesFromMap = function() {
     if (io.sockets.sockets) {
       for (var i in clientData) {
         var data = clientData[i];
+        var player = players[i];
         var body = data.body;
         // must grab data this way since the object is
         // converted to pure JSON on the way to the client
@@ -115,6 +116,7 @@ var initWorldBodiesFromMap = function() {
         data.x = pos.get_x();
         data.y = pos.get_y();
         data.angle = body.GetAngle();
+        data.aim = player.aiming ? data.aim : -1;
 
         // simulate ground and wind friction
         // so that they don't roll forever
@@ -169,12 +171,14 @@ io.of('/client').on('connection', function(socket) {
   body.CreateFixture(fixDef);
 
   players[socket.id] = {
-    body: body
+    body: body,
+    aiming: false
   };
 
   clientData[socket.id] = {
     id: socket.id,
-    body: body
+    body: body,
+    aim: -1
   };
 
   // tell everybody!
@@ -187,12 +191,15 @@ io.of('/client').on('connection', function(socket) {
     console.log("Client " + socket.id + " fired!", msg);
     var body = players[socket.id].body;
     body.ApplyForce(new Box2D.b2Vec2(msg.deltaX * msg.power * 20, msg.deltaY * msg.power * 20), body.GetWorldCenter());
+
+    players[socket.id].aiming = false;
   });
 
   socket.on("aim-change", function aimChange(msg) {
-    // TODO: do something here
-    // update view etc
-    // console.log(socket.id + " aimed:", msg)
+    if (!players[socket.id].aiming) {
+      players[socket.id].aiming = true;
+    }
+    clientData[socket.id].aim = msg.angle;
   });
 
   socket.on('update movement', function(msg) {

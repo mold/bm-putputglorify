@@ -87,6 +87,8 @@
 			ry: 10,
 		})
 
+		var angle = (evt.angle < 0 ? 360 + evt.angle : evt.angle) * Math.PI / 180;
+
 		if (evt.isFinal) {
 			// send shot!!! it's done!!!
 			dpStart.add(dpEnd).add(dpLine).add(dpPointerLine).add(dpPointerLineBall)
@@ -96,7 +98,7 @@
 
 			socket.emit("shot-fired", {
 				power: power,
-				angle: evt.angle,
+				angle: angle,
 				deltaX: -(correctX - startX),
 				deltaY: -(correctY - startY),
 			})
@@ -111,7 +113,7 @@
 
 			socket.emit("aim-change", {
 				power: power,
-				angle: evt.angle,
+				angle: angle,
 				deltaX: correctX - startX,
 				deltaY: correctY - startY,
 			})
