@@ -7,7 +7,7 @@ var Box2D = b2.Box2D;
 var gameloop = require('node-gameloop');
 var MersenneTwister = require('mersenne-twister');
 var _ = require('lodash');
-
+var THREE = require('three');
 
 var latestBody;
 var groundMaterial;
