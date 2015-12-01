@@ -235,7 +235,7 @@ function releaseClientColor(c) {
 var initWorldBodiesFromMap = function() {
   // create a rectangle for each wall piece
   var shape = new Box2D.b2PolygonShape();
-  shape.SetAsBox(0.5, 0.5);
+  shape.SetAsBox(0.4, 0.4);
 
   for (var i = 0; i < map.length; i++) {
     bodyMap.push([]);
