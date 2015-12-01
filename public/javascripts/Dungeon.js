@@ -64,7 +64,6 @@ define([
             type: "t",
             value: texture
         };
-        console.log(uniforms)
         var material = new THREE.ShaderMaterial({
             uniforms: uniforms,
             vertexShader: AssetManager.shaders.dungeon_vertex_shader,

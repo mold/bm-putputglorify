@@ -3,6 +3,7 @@ define([
     "RandomEngine",
     "IOHandler",
     "Sprite",
+    "ColoredSprite",
     "Dungeon",
     "SocketIO",
     "AssetManager"
@@ -11,6 +12,7 @@ define([
     RandomEngine,
     IOHandler,
     Sprite,
+    ColoredSprite,
     Dungeon,
     SocketIO,
     AssetManager
@@ -57,21 +59,35 @@ define([
     socket.on("bodies", function(bodies) {
         if (dungeon) {
             var b = 0;
-            var coords = [];
+            //var coords = [];
             for (i in bodies) {
                 var body = bodies[i];
                 var ch = characters[body.id];
                 if (!ch) {
-                    var ch = createCharacter();
+                    var ch = createCharacter(body.color);
                     characters[body.id] = ch;
                     dungeon.add(ch);
                 }
                 ch.position.set(body.x + 0.5, -body.y + 0.5, 0);
                 ch.quaternion.setFromAxisAngle(new THREE.Vector3(0, 0, 1), body.angle);
 
-                coords.push('( ' + (Math.floor(10 * body.x) / 10) + ' , ' + (Math.floor(10 * body.y) / 10) + ' )');
+                if (body.aim >= 0) {
+                    var angle = body.angle - (Math.PI - body.aim);
+                    var scale = 0.5 + Math.pow(body.aimPower, 2);
+                    var vibrateX = Math.random() * Math.pow(body.aimPower, 2) * 0.1;
+                    var vibrateY = Math.random() * Math.pow(body.aimPower, 2) * 0.1;
+                    var distance = 0.6 + 0.5 * body.aimPower;
+                    ch.aim.scale.set(scale, scale, 1);
+                    ch.aim.position.set(Math.cos(angle) * distance + vibrateX, -Math.sin(angle) * distance + vibrateY, 0);
+                    ch.aim.visible = true;
+                    ch.aim.quaternion.setFromAxisAngle(new THREE.Vector3(0, 0, 1), Math.PI * 3 / 2 - angle);
+                } else {
+                    ch.aim.visible = false;
+                }
+
+                //coords.push('( ' + (Math.floor(10 * body.x) / 10) + ' , ' + (Math.floor(10 * body.y) / 10) + ' , ' + (Math.floor(10 * body.aimPower) / 10) + ' )');
             }
-            debug.innerHTML = coords.join(' ');
+            //debug.innerHTML = coords.join(' ');
         }
     });
 
@@ -82,12 +98,19 @@ define([
 
     ///////////////////////////
 
-    function createCharacter() {
+    function createCharacter(color) {
         // add character
         var img = AssetManager.images.sprite_map;
-        ch = new Sprite(img, img.width, img.height, 16, 16);
+        ch = new ColoredSprite(img, 16, 16, color);
         ch.setTile(16 * 12 + 1);
         ch.setSize(1, 1);
+
+        ch.aim = new ColoredSprite(img, 16, 16, color);
+        ch.aim.setTile(16 * 12 + 3);
+        ch.aim.setSize(1, 1);
+        ch.aim.visible = false;
+        ch.add(ch.aim);
+
         return ch;
     }
 

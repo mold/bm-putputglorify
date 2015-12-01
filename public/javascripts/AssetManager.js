@@ -61,6 +61,8 @@ define([
 
 		shaderLoader.load("shaders/dungeon_vertex_shader.glsl", shaderCallback("dungeon_vertex_shader"));
 		shaderLoader.load("shaders/dungeon_fragment_shader.glsl", shaderCallback("dungeon_fragment_shader"));
+		shaderLoader.load("shaders/colored_vertex_shader.glsl", shaderCallback("colored_vertex_shader"));
+		shaderLoader.load("shaders/colored_fragment_shader.glsl", shaderCallback("colored_fragment_shader"));
 	}
 
 });

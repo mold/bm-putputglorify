@@ -8,6 +8,7 @@ var gameloop = require('node-gameloop');
 var MersenneTwister = require('mersenne-twister');
 var _ = require('lodash');
 
+
 var latestBody;
 var groundMaterial;
 
@@ -202,6 +203,35 @@ var destroy_list = [];
 var players = {};
 var clientData = {};
 
+var colors = [];
+
+(function() {
+  // create a bunch of colors
+  var c = new THREE.Color();
+  var ncolors = 6;
+  var nvalues = 2;
+  for (var j = 0; j < nvalues; j++) {
+    for (var i = 0; i < ncolors; i++) {
+      c.setHSL((i + j / nvalues) / ncolors, 0.8, 0.6 - 0.4 * j / nvalues);
+      colors.push(c.getHex());
+    }
+  }
+})();
+
+function getNewClientColor() {
+  if (colors.length > 0) {
+    return colors.splice(0, 1)[0];
+  } else {
+    // fallback
+    console.log("No colors left");
+    return Math.floor(Math.random() * 0xFFFFFF);
+  }
+}
+
+function releaseClientColor(c) {
+  colors.unshift(c);
+}
+
 var initWorldBodiesFromMap = function() {
   // create a rectangle for each wall piece
   var shape = new Box2D.b2PolygonShape();
@@ -216,7 +246,7 @@ var initWorldBodiesFromMap = function() {
         var bodyDef = new Box2D.b2BodyDef();
         bodyDef.set_position(new Box2D.b2Vec2(j, i));
         var body = world.CreateBody(bodyDef);
-        body.CreateFixture(shape, 5.0);
+        body.CreateFixture(shape, 5.0); // density 5
 
         bodyMap[i].push(body);
       }
@@ -244,6 +274,7 @@ var initWorldBodiesFromMap = function() {
     if (io.sockets.sockets) {
       for (var i in clientData) {
         var data = clientData[i];
+        var player = players[i];
         var body = data.body;
         // must grab data this way since the object is
         // converted to pure JSON on the way to the client
@@ -251,6 +282,7 @@ var initWorldBodiesFromMap = function() {
         data.x = pos.get_x();
         data.y = pos.get_y();
         data.angle = body.GetAngle();
+        data.aim = player.aiming ? data.aim : -1;
 
         // simulate ground and wind friction
         // so that they don't roll forever
@@ -296,21 +328,26 @@ io.of('/client').on('connection', function(socket) {
   var bodyDef = new Box2D.b2BodyDef();
   bodyDef.set_type(Box2D.b2_dynamicBody);
   bodyDef.set_position(new Box2D.b2Vec2(w / 2, h / 2));
-  bodyDef.friction = 0.9;
-  bodyDef.density = 1;
-  bodyDef.restitution = 1;
-  bodyDef.linearDamping = 1;
-  bodyDef.angularDamping = 1;
+  var fixDef = new Box2D.b2FixtureDef();
+  fixDef.set_density(7.0);
+  fixDef.set_friction(0.5);
+  fixDef.set_restitution(0.7); // bounciness - higher is bouncier
+  fixDef.set_shape(shape);
   var body = world.CreateBody(bodyDef);
-  body.CreateFixture(shape, 5.0);
+  body.CreateFixture(fixDef);
 
   players[socket.id] = {
-    body: body
+    body: body,
+    color: getNewClientColor(),
+    aiming: false
   };
 
   clientData[socket.id] = {
     id: socket.id,
-    body: body
+    body: body,
+    color: players[socket.id].color,
+    aim: -1,
+    aimPower: 0
   };
 
   // tell everybody!
@@ -318,17 +355,23 @@ io.of('/client').on('connection', function(socket) {
     sock.emit("body-create", clientData[socket.id]);
   });
 
+  // send a message to the client
+  socket.emit("connected", clientData[socket.id]);
+
   console.log('Client connected! Id:', socket.id);
   socket.on("shot-fired", function shotFired(msg) {
-    console.log("Client " + socket.id + " fired!", msg);
     var body = players[socket.id].body;
     body.ApplyForce(new Box2D.b2Vec2(msg.deltaX * msg.power * 20, msg.deltaY * msg.power * 20), body.GetWorldCenter());
+
+    players[socket.id].aiming = false;
   });
 
   socket.on("aim-change", function aimChange(msg) {
-    // TODO: do something here
-    // update view etc
-    // console.log(socket.id + " aimed:", msg)
+    if (!players[socket.id].aiming) {
+      players[socket.id].aiming = true;
+    }
+    clientData[socket.id].aim = msg.angle;
+    clientData[socket.id].aimPower = msg.power;
   });
 
   socket.on('update movement', function(msg) {
@@ -340,7 +383,9 @@ io.of('/client').on('connection', function(socket) {
       sock.emit("body-destroy", clientData[socket.id]);
     });
     console.log('Client disconnected!');
-    destroy_list.push(players[socket.id].body);
+    var player = players[socket.id];
+    destroy_list.push(player.body);
+    releaseClientColor(player.color);
     delete players[socket.id];
     delete clientData[socket.id];
 

@@ -3,6 +3,16 @@ body {
 	margin: 0;
 }
 
+svg {
+	position: absolute;
+	left: 0;
+	top: 0;
+	right: 0;
+	bottom: 0;
+	width: 100%;
+	height: 100%;
+}
+
 #dragger-pointer-starter {
 	fill: #50382E;
 	stroke: #2F0E0E;
