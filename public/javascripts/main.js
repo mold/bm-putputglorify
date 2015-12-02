@@ -6,7 +6,8 @@ define([
     "ColoredSprite",
     "Dungeon",
     "SocketIO",
-    "AssetManager"
+    "AssetManager",
+    "QRCode"
 ], function(
     THREE,
     RandomEngine,
@@ -15,7 +16,8 @@ define([
     ColoredSprite,
     Dungeon,
     SocketIO,
-    AssetManager
+    AssetManager,
+    QRCode
 ) {
 
     var iohandler = new IOHandler();
@@ -41,10 +43,20 @@ define([
 
     window.paused = false;
     var debug = document.getElementById("debug");
+    var qrButton = document.getElementById("qr-button");
+    var overlay = document.getElementById("overlay");
+
+    qrButton.addEventListener('click', function() {
+        overlay.style.display = 'block';
+    });
+    overlay.addEventListener('click', function() {
+        overlay.style.display = 'none';
+    });
 
     var LERP_FRACTION = 1.0 / 6.0; /* 0 < LERP_FRACTION <= 1.0 */
 
     window.addEventListener('resize', resizeHandler, false);
+
 
     socket.on("body-create", function(body) {
         console.info("client connected");
@@ -91,6 +103,7 @@ define([
         }
     });
 
+    socket.on("viewer-init", viewerInit);
     socket.on("map-update", load);
     AssetManager.onLoad(init);
 
@@ -149,6 +162,21 @@ define([
         }
 
         loop();
+    }
+
+    function viewerInit(data) {
+        var qrcodeEl = document.getElementById("qrcode");
+        var clientEl = document.getElementById("client-url");
+        clientEl.innerHTML = data.client;
+        qrcodeEl.innerHTML = "";
+        var qrcode = new QRCode(qrcodeEl, {
+            text: data.client,
+            width: 256,
+            height: 256,
+            colorDark: "#000000",
+            colorLight: "#ffffff",
+            correctLevel: QRCode.CorrectLevel.H
+        });
     }
 
     var ang = 0;

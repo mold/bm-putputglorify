@@ -9,6 +9,23 @@ var MersenneTwister = require('mersenne-twister');
 var _ = require('lodash');
 var THREE = require('three');
 
+var port = 3004;
+var root = process.env.ROOT_URL;
+if (!root) {
+  // take the first ip that we can find!
+  var os = require('os');
+  var networkInterfaces = os.networkInterfaces();
+  for (var type in networkInterfaces) {
+    if (type.match(/^wlan/g)) {
+      root = 'http://' + networkInterfaces[type][0].address + ':' + port + '/';
+    }
+  }
+} else {
+  root = '';
+}
+
+console.log('Server root: ' + root);
+
 var latestBody;
 var groundMaterial;
 
@@ -329,6 +346,10 @@ var initWorldBodiesFromMap = function() {
 // TODO: the player client also triggers this
 io.of('/').on('connection', function(socket) {
   // Send map the first we do
+  io.emit('viewer-init', {
+    root: root,
+    client: root + 'client'
+  });
   io.emit('map-update', map);
   console.log('Viewer connected! Id:', socket.id);
 });
@@ -404,6 +425,6 @@ io.of('/client').on('connection', function(socket) {
 
   });
 });
-http.listen(3004, function() {
+http.listen(port, function() {
   console.log('Listening on port: 3004');
 });
