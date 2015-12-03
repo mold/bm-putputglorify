@@ -39,7 +39,7 @@ define([
     var map;
     var character;
     var characters = {};
-    window.characters = characters;
+    var robots = {};
 
     window.paused = false;
     var debug = document.getElementById("debug");
@@ -63,17 +63,19 @@ define([
     });
 
     socket.on("body-destroy", function(body) {
-        console.info("client disconnected", body, characters);
-        dungeon.remove(characters[body.id]);
-        delete characters[body.id];
+        console.info("client disconnected", body);
+        if (body.id in characters) {
+            dungeon.remove(characters[body.id]);
+            delete characters[body.id];
+        }
     });
 
     socket.on("bodies", function(bodies) {
         if (dungeon) {
             var b = 0;
             //var coords = [];
-            for (i in bodies) {
-                var body = bodies[i];
+            for (i in bodies.players) {
+                var body = bodies.players[i];
                 var ch = characters[body.id];
                 if (!ch) {
                     var ch = createCharacter(body.color);
@@ -100,6 +102,31 @@ define([
                 //coords.push('( ' + (Math.floor(10 * body.x) / 10) + ' , ' + (Math.floor(10 * body.y) / 10) + ' , ' + (Math.floor(10 * body.aimPower) / 10) + ' )');
             }
             //debug.innerHTML = coords.join(' ');
+            for (var i in bodies.robots) {
+                var body = bodies.robots[i];
+                var rb = robots[body.id];
+                if (!rb) {
+                    var rb = createCharacter();
+                    robots[body.id] = rb;
+                    dungeon.add(rb);
+                }
+                rb.position.set(body.x + 0.5, -body.y + 0.5, 0);
+                rb.quaternion.setFromAxisAngle(new THREE.Vector3(0, 0, 1), body.angle);
+
+                if (body.aim >= 0) {
+                    var angle = body.angle - (Math.PI - body.aim);
+                    var scale = 0.5 + Math.pow(body.aimPower, 2);
+                    var vibrateX = Math.random() * Math.pow(body.aimPower, 2) * 0.1;
+                    var vibrateY = Math.random() * Math.pow(body.aimPower, 2) * 0.1;
+                    var distance = 0.6 + 0.5 * body.aimPower;
+                    rb.aim.scale.set(scale, scale, 1);
+                    rb.aim.position.set(Math.cos(angle) * distance + vibrateX, -Math.sin(angle) * distance + vibrateY, 0);
+                    rb.aim.visible = true;
+                    rb.aim.quaternion.setFromAxisAngle(new THREE.Vector3(0, 0, 1), Math.PI * 3 / 2 - angle);
+                } else {
+                    rb.aim.visible = false;
+                }
+            }
         }
     });
 
@@ -114,8 +141,15 @@ define([
     function createCharacter(color) {
         // add character
         var img = AssetManager.images.sprite_map;
-        ch = new ColoredSprite(img, 16, 16, color);
-        ch.setTile(16 * 12 + 1);
+        var ch;
+        if (isNaN(color)) {
+            ch = new Sprite(img, img.width, img.height, 16, 16);
+            ch.setTile(16 * 12 + 4);
+            color = 0xffffff;
+        } else {
+            ch = new ColoredSprite(img, 16, 16, color);
+            ch.setTile(16 * 12 + 1);
+        }
         ch.setSize(1, 1);
 
         ch.aim = new ColoredSprite(img, 16, 16, color);
@@ -149,6 +183,8 @@ define([
 
         for (var i in characters)
             dungeon.add(characters[i]);
+        for (var i in robots)
+            dungeon.add(robots[i]);
 
         // TODO: the light shader is broken, don't add more lights!
         var light = new THREE.PointLight(0xFFF6BB, 1.0, 7.0);

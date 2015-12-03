@@ -8,6 +8,7 @@ var gameloop = require('node-gameloop');
 var MersenneTwister = require('mersenne-twister');
 var _ = require('lodash');
 var THREE = require('three');
+var ShellRobot = require(__dirname + '/public/javascripts/ShellRobot');
 
 var port = 3004;
 var root = process.env.ROOT_URL;
@@ -211,7 +212,7 @@ function printMaze() {
 //printMaze();
 
 
-var oldMap = [
+var map = [
   [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
   [1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1],
   [1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1],
@@ -232,6 +233,7 @@ var bodyMap = [];
 var destroy_list = [];
 var players = {};
 var clientData = {};
+var robots = {};
 
 var colors = [];
 
@@ -290,6 +292,11 @@ var initWorldBodiesFromMap = function() {
   // no gravity
   world = new Box2D.b2World(new Box2D.b2Vec2(0.0, 0.0), true);
 
+  // add a shellbot
+  var shellbot = new ShellRobot(world, w / 2, h / 2);
+  shellbot.setTarget(w / 2 + 2, h / 2 - 2);
+  robots[shellbot.id] = shellbot;
+
   initWorldBodiesFromMap();
 
   var fixedTimeStep = 1.0 / 60.0; // seconds
@@ -300,6 +307,30 @@ var initWorldBodiesFromMap = function() {
     //world.step(fixedTimeStep, delta, maxSubSteps);
     world.Step(fixedTimeStep, 2, 2);
     world.ClearForces();
+
+    // update the robots
+    for (var i in robots) {
+      var rb = robots[i];
+      rb.update(delta);
+      var body = rb.body;
+      var pos = rb.getPos();
+      rb.x = pos.x;
+      rb.y = pos.y;
+      rb.angle = 2 * Math.PI - body.GetAngle();
+
+      // simulate ground and wind friction
+      // so that they don't roll forever
+      var v = body.GetLinearVelocity();
+      if (v.Length() > 0 && v.Length() < maxLinearVelocity) {
+        var x = v.get_x();
+        var y = v.get_y();
+        var linearDamping = linearDampingFunction(v.Length());
+        body.ApplyForce(new Box2D.b2Vec2(-x * linearDamping, -y * linearDamping), body.GetWorldCenter());
+        // this is very arbitrary
+        // TODO: check so that it doesn't starts to spin faster
+        body.ApplyAngularImpulse(-body.GetAngularVelocity() * linearDamping * angularDamping);
+      }
+    }
 
     if (io.sockets.sockets) {
       for (var i in clientData) {
@@ -328,7 +359,10 @@ var initWorldBodiesFromMap = function() {
         }
       }
       io.sockets.sockets.forEach(function(sock) {
-        sock.emit("bodies", clientData);
+        sock.emit("bodies", {
+          "players": clientData,
+          "robots": robots
+        });
       });
     }
     // destroy old players
