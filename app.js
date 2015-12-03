@@ -8,7 +8,8 @@ var gameloop = require('node-gameloop');
 var MersenneTwister = require('mersenne-twister');
 var _ = require('lodash');
 var THREE = require('three');
-var ShellRobot = require(__dirname + '/public/javascripts/ShellRobot');
+
+var ShellRobot = require('./serverjs/ShellRobot');
 
 var port = 3004;
 var root = process.env.ROOT_URL;
