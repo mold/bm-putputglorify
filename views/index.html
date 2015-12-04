@@ -5,15 +5,21 @@
     <link rel="stylesheet" type="text/css" href="styles/style.css">
     <script data-main="scripts/require-init.js" src="scripts/lib/require.min.js"></script>
   </head>
-
   <body style="margin: 0;">
-  	<p id="debug" style="color:#fff;background:rgba(0,0,0,0.2);font-weight:bold;position:absolute;top:0;left:0;z-index:1;"></p>
-  	<input type="button" id="qr-button" value="QR" />
-  	<div id="overlay">
-	  	<div id="qrcode">
-	  	</div>
-		<p>Clients connect to</p>
-		<p id="client-url"></p> 
-	</div>
+    <p id="debug" style="color:#fff;background:rgba(0,0,0,0.2);font-weight:bold;position:absolute;top:0;left:0;z-index:1;"></p>
+    <div class="view-buttons">
+      <button id="qr-button" >QR</button>
+      <button id="join-button" >Join</button>
+    </div>
+    <div id="overlay">
+      <div id="qrcode">
+      </div>
+      <p>Clients connect to</p>
+      <p id="client-url"></p>
+    </div>
+    <div id="controller">
+      <div><button id="close-controller">X</button></div>
+      <iframe src="" frameborder="0" id="controller-iframe"></iframe>
+    </div>
   </body>
 </html>

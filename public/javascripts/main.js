@@ -7,7 +7,8 @@ define([
     "Dungeon",
     "SocketIO",
     "AssetManager",
-    "QRCode"
+    "QRCode",
+    "jQuery"
 ], function(
     THREE,
     RandomEngine,
@@ -17,9 +18,9 @@ define([
     Dungeon,
     SocketIO,
     AssetManager,
-    QRCode
+    QRCode,
+    jQuery
 ) {
-
     var iohandler = new IOHandler();
     var socket = new SocketIO();
 
@@ -45,6 +46,32 @@ define([
     var debug = document.getElementById("debug");
     var qrButton = document.getElementById("qr-button");
     var overlay = document.getElementById("overlay");
+    var joinButton = $("#join-button");
+
+    joinButton.click(function() {
+        var ctrl = $("#controller");
+        var iframe = $("#controller-iframe");
+        var closeBtn = $("#close-controller");
+
+        var closeController = function() {
+            // remove the controller and leave the game?
+            iframe.attr("src", "");
+            ctrl.hide(500);
+            joinButton.html("Join");
+
+        }
+
+        closeBtn.click(closeController);
+
+        if (ctrl.css("display") == "none") {
+            // load a controller on the page
+            ctrl.show(500);
+            iframe.attr("src", "http://" + window.location.host + window.location.pathname + "client");
+            joinButton.html("Leave");
+        } else {
+            closeController();
+        }
+    })
 
     qrButton.addEventListener('click', function() {
         overlay.style.display = 'block';

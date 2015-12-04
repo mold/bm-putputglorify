@@ -1,11 +1,9 @@
 //AGI 15 - Project 2 stylesheet
-body
-{
+body {
 	margin: 0;
 }
 
-canvas
-{
+canvas {
 	width: 100%;
 	height: 100%;
 }
@@ -16,7 +14,7 @@ canvas
 	top: 0;
 	width: 100%;
 	height: 100%;
-	background: rgba(0,0,0,0.7);
+	background: rgba(0, 0, 0, 0.7);
 	color: white;
 	font-weight: bold;
 	text-align: center;
@@ -31,16 +29,42 @@ canvas
 	margin: 40px auto;
 }
 
-#qr-button {
+.view-buttons {
 	position: absolute;
-    left: 10px;
-    bottom: 10px;
-    font-family: monospace;
-    background: #222;
-    color: white;
-    width: 40px;
-    height: 40px;
-    font-weight: bold;
-    border: 2px solid white;
-    font-size: 12pt;
+	left: 10px;
+	bottom: 10px;
+}
+
+.view-buttons button {
+	margin-right: 10px;
+}
+
+button {
+	font-family: monospace;
+	background: #222;
+	color: white;
+	min-width: 40px;
+	height: 40px;
+	font-weight: bold;
+	border: 2px solid white;
+	font-size: 12pt;
+	float: left;
+	cursor: pointer;
+}
+
+#controller {
+	display: none;
+	position: absolute;
+	bottom: 10px;
+	right: 10px;
+}
+
+#controller-iframe {
+	width: 300px;
+	height: 300px;
+}
+
+#close-controller {
+	float: right;
+	margin-bottom: 10px;
 }
