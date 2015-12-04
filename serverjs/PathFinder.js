@@ -6,7 +6,6 @@
 var PriorityQueue = require('./PriorityQueue');
 
 
-
     /**
         A Pathfinder for a 2D map.
         @constructor
@@ -63,7 +62,6 @@ var PriorityQueue = require('./PriorityQueue');
 
         queue.add(start, this._heuristicEval(start, goal));
 
-
         while (queue.getLength() > 0) {
             var tmp = queue.remove();
             var neighbors = this._get_unvisited_neighbors(tmp, mapCopy);
@@ -87,12 +85,12 @@ var PriorityQueue = require('./PriorityQueue');
         var neighbors = [],
             tmp, new_c;
         // Prioritize using diagonal moves -- makes zig-zag patterns where possible :D
-        if (c.x !== 0 && c.y !== 0) {
+/*        if (c.x !== 0 && c.y !== 0) {
             // upleft ok
             tmp = this._backtrack_coordinate_from_dir("downright");
             new_c = {
-                "y": c.y + tmp.y,
-                "x": c.x + tmp.x
+                y: (c.y + tmp.y),
+                x: (c.x + tmp.x)
             };
             if (mapCopy[new_c.y][new_c.x] === 0) {
                 if (this.is_walkable(new_c, this.map)) {
@@ -138,7 +136,7 @@ var PriorityQueue = require('./PriorityQueue');
                     neighbors.push(new_c);
                 }
             }
-        }
+        }*/
         if (c.y !== 0) {
             // up ok
             tmp = this._backtrack_coordinate_from_dir("down");
@@ -208,21 +206,64 @@ var PriorityQueue = require('./PriorityQueue');
             y = y + c.y;
             tmp = mapCopy[y][x];
         }
-        return path;
+        return path.map(function(dir){
+            switch (dir) {
+            case "upleft":
+                return {
+                    "y": 1,
+                    "x": 1
+                };
+            case "up":
+                return {
+                    "y": 1,
+                    "x": 0
+                };
+            case "upright":
+                return {
+                    "y": 1,
+                    "x": -1
+                };
+            case "left":
+                return {
+                    "y": 0,
+                    "x": 1
+                };
+            case "right":
+                return {
+                    "y": 0,
+                    "x": -1
+                };
+            case "downleft":
+                return {
+                    "y": -1,
+                    "x": 1
+                };
+            case "down":
+                return {
+                    "y": -1,
+                    "x": 0
+                };
+            case "downright":
+                return {
+                    "y": -1,
+                    "x": -1
+                };
+        }
+        });
     };
 
-    /*
-        @return - a string with direction  if from and to are adjacent
-                - null otherwise
-    */
+    /**
+     *  @return - a string with direction  if from and to are adjacent
+     *           - null otherwise
+     */
     Pathfinder.prototype._get_direction = function(from, to) {
         var dx = from.x - to.x;
         var dy = from.y - to.y;
 
         /*
-            | (-1,-1) | (-1,0) | (-1,1) |
-            | (0,-1) | (0,0) | (0, 1) |
-            | (1,-1) | (1, 0) | (1, 1) |
+            | (-1, -1) | (-1, 0) | (-1, 1) |
+            | ( 0, -1) | ( 0, 0) | ( 0, 1) |
+            | ( 1, -1) | ( 1, 0) | ( 1, 1) |
         */
 
         if (dy === -1 && dx === -1) {
@@ -290,6 +331,7 @@ var PriorityQueue = require('./PriorityQueue');
                     "x": -1
                 };
         }
+        return null;
     };
 
 

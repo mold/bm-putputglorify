@@ -3,19 +3,20 @@ var Box2D = require('box2d.js').Box2D;
 /**
  * A shell robot (shellbot)!
  * The shellbot can move towards a set target point.
- * 
- * @param {Box2D.World} world A Box2D world.
- * @param {number} x          X start coordinate.
- * @param {number} y          Y start coordinate.
+ *
+ * @param {Box2D.World} world       A Box2D world.
+ * @param {number} x                X start coordinate.
+ * @param {number} y                Y start coordinate.
+ * @param {PathFinder} pathFinder   A PathFinder.
  */
-function ShellRobot(world, x, y) {
+function ShellRobot(world, x, y, pathFinder) {
     // create some kind of unique-ish id
     var unique = (ShellRobot.ID++) + Date.now();
     this.id = Math.floor(unique * (1 + Math.cos(unique))).toString(32);
 
     this.x = isNaN(x) ? 0 : x;
     this.y = isNaN(y) ? 0 : y;
-    this.setTarget(this.x, this.y);
+    this.setCurrentTarget(this.x, this.y);
     this.aim = -1;
     this.aimPower = 0;
 
@@ -41,6 +42,11 @@ function ShellRobot(world, x, y) {
     var body = world.CreateBody(bodyDef);
     body.CreateFixture(fixDef);
     this.body = body;
+
+    this.pathFinder = pathFinder;
+    this.path = [];
+    this.lastPoppedTime = 0;
+
 }
 
 /**
@@ -51,8 +57,8 @@ function ShellRobot(world, x, y) {
  */
 ShellRobot.prototype.update = function(dt) {
     // error is distance to target point
-    var errorX = Math.abs(this.x - this.targetX);
-    var errorY = Math.abs(this.y - this.targetY);
+    var errorX = Math.abs(this.x - this.currentTargetX);
+    var errorY = Math.abs(this.y - this.currentTargetY);
     var d = Math.sqrt(Math.pow(errorX, 2) + Math.pow(errorY, 2));
 
     // calculate the PID control values
@@ -66,14 +72,16 @@ ShellRobot.prototype.update = function(dt) {
     D = ShellRobot.KD * (errorY - this.lastErrorY) / dt;
     var controlY = P + I + D;
 
+
     // correct position
     if (Math.max(controlX, controlY) > ShellRobot.CONTROL_MIN) {
+
         if (this.slingDelay < ShellRobot.SLING_DELAY) {
             // add a small delay between slings
             this.slingDelay += dt;
         } else {
-            var dx = (this.targetX - this.x) / d;
-            var dy = (this.targetY - this.y) / d;
+            var dx = (this.currentTargetX - this.x) / d;
+            var dy = (this.currentTargetY - this.y) / d;
             if (Math.max(controlX, controlY) > this.slingMeter && this.slingMeter < ShellRobot.CONTROL_MAX) {
                 // draw the sling
                 var aimPower = this.slingMeter / ShellRobot.CONTROL_MAX;
@@ -93,20 +101,63 @@ ShellRobot.prototype.update = function(dt) {
         }
     } else {
         this.aim = -1;
-    }
 
+        // Do this when we are close enough to currentTarget
+        if (!this.path) {this.path = []};
+        if (this.path.length > 0 && this.lastPoppedTime > ShellRobot.POP_DELAY) {
+            this.lastPoppedTime = 0;
+            var next = this.path.pop();
+            //console.log('popping path: ', next);
+            var currentPos = this.body.GetPosition();
+            this.setCurrentTarget(Math.floor(currentPos.get_x()) - next.x, Math.floor(currentPos.get_y()) - next.y);
+        }
+
+    }
+    this.lastPoppedTime += dt;
     this.lastErrorX = errorX;
     this.lastErrorY = errorY;
 };
 
 /**
- * Sets a target position.
+ * Sets the current target position.
  * @param {number} x X coordinate.
  * @param {number} y Y coordinate.
  */
-ShellRobot.prototype.setTarget = function(x, y) {
-    this.targetX = x;
-    this.targetY = y;
+ShellRobot.prototype.setCurrentTarget = function(x, y) {
+    //console.log('setting current target', x, y);
+    this.currentTargetX = x;
+    this.currentTargetY = y;
+};
+
+/**
+ * Sets a global target position.
+ * @param {number} x X coordinate.
+ * @param {number} y Y coordinate.
+  */
+ShellRobot.prototype.setGlobalTarget = function(x, y) {
+    var currentPos = this.getDiscreteBodyPosition();
+    //console.info('Setting global target! ');
+    //console.info('from:', { x:Math.floor(currentPos.x),
+    //                            y:Math.floor(currentPos.y)});
+    //console.info('to:', {x:Math.floor(x), y:Math.floor(y)});
+
+    this.path = this.pathFinder.findPath(
+        { x:Math.floor(currentPos.x),
+          y:Math.floor(currentPos.y)},
+        { x:Math.floor(x),
+          y:Math.floor(y)});
+    //console.info(this.path);
+
+
+
+    this.setCurrentTarget(currentPos.x, currentPos.y);
+};
+
+ShellRobot.prototype.getDiscreteBodyPosition = function() {
+    var currentPos = this.body.GetPosition();
+    var x = Math.floor(currentPos.get_x());
+    var y = Math.floor(currentPos.get_y());
+    return {x:x, y:y};
 };
 
 /**
@@ -135,6 +186,9 @@ ShellRobot.CONTROL_MIN = 0.2; // floor where the PID output is not used
 ShellRobot.CONTROL_MAX = 4; // roof where the PID output is cut
 ShellRobot.SLING_FORCE = 5000; // force in banana units...
 ShellRobot.SLING_DELAY = 0.3; // delay in seconds between slings
+// pathFinder parameters
+ShellRobot.POP_DELAY = 0.001 * 300; // delay in seconds
+
 /**
  * Controls how fast the sling meter is refilled based on the aiming power.
  * @param  {number} power Aiming power (0-1).

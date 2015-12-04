@@ -19,7 +19,7 @@
             "val": element,
             "priority": priority_value
         });
-        //this._queue.sort(this.cmp);
+        this._queue.sort(this.cmp);
     };
 
     PriorityQueue.prototype.remove = function() {
@@ -28,8 +28,8 @@
             throw error("Can not remove an element from an empty queue.");
         }
 
-
-        var tmp = { "priority": 0 };
+        /*
+        var tmp = { "priority": 99999999999999999 };
         var min_idx = -1;
 
         for (var i = 0; i < this._queue.length; i++) {
@@ -38,8 +38,10 @@
                 min_idx = i;
             }
         }
-        return this._queue.splice(i, 1);
-        //return this._queue.pop().val;
+
+        var a = this._queue.splice(min_idx, 1)[0];
+        return a.val;*/
+        return this._queue.pop().val;
     };
 
     PriorityQueue.prototype.getLength = function() {
