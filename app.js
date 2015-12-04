@@ -72,27 +72,25 @@ app.get('/server', function(req, res) {
 });
 
 
-/*
 
 // Generates a random map
 var map = [];
 var mapWidth = 20,
-mapHeight = 30;
+    mapHeight = 30;
 
 var mazeGenerator = generateMaze(map, mapWidth, mapHeight);
 
-*/
-
-var map = [
+var testMap = [
     [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
-    [1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1],
-    [1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1],
     [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
     [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
     [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-    [1, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0, 0, 1],
-    [1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-    [1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+    [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+    [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+    [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+    [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+    [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+    [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
     [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
 ];
 
@@ -170,9 +168,10 @@ var initWorldBodiesFromMap = function() {
 
     // add a shellbot
     var shellbot = new ShellRobot(world, w / 2, h / 2, pathFinder);
-    shellbot.setGlobalTarget(w / 2 + 2, h / 2 - 2);
     robots[shellbot.id] = shellbot;
-    var timeUntilNextGlobalTargetUpdate = Math.floor(3*RandomEngine.random());
+    var timeUntilNextGlobalTargetUpdate = 1;
+    var targetPoint = 0;
+
     initWorldBodiesFromMap();
 
     var fixedTimeStep = 1.0 / 60.0; // seconds
@@ -191,14 +190,12 @@ var initWorldBodiesFromMap = function() {
             var rb = robots[i];
             rb.update(delta);
             var body = rb.body;
-            if (timeUntilNextGlobalTargetUpdate < 0) {
+            if (timeUntilNextGlobalTargetUpdate <= 0) {
                 if (Object.keys(players).length > 0) {
-                    var pidx = Math.round(RandomEngine.random()*(Object.keys(players).length - 1));
-                    var ppos = players[Object.keys(players)[pidx]].body.GetPosition();
-                    rb.setGlobalTarget(ppos.get_x(), ppos.get_y());
-
+                    var pos = players[Object.keys(players)[0]].body.GetPosition();
+                    shellbot.setGlobalTarget(pos.get_x(), pos.get_y());
                 }
-                timeUntilNextGlobalTargetUpdate = 2.5 + Math.floor(10*RandomEngine.random());
+                timeUntilNextGlobalTargetUpdate = 8;
             }
 
             var pos = rb.getPos();

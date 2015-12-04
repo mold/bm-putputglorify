@@ -1,4 +1,4 @@
-var Box2D = require('box2d.js').Box2D;
+var Box2D = require("box2d.js").Box2D;
 
 /**
  * A shell robot (shellbot)!
@@ -103,13 +103,10 @@ ShellRobot.prototype.update = function(dt) {
         this.aim = -1;
 
         // Do this when we are close enough to currentTarget
-        if (!this.path) {this.path = []};
-        if (this.path.length > 0 && this.lastPoppedTime > ShellRobot.POP_DELAY) {
-            this.lastPoppedTime = 0;
-            var next = this.path.pop();
-            //console.log('popping path: ', next);
-            var currentPos = this.body.GetPosition();
-            this.setCurrentTarget(Math.floor(currentPos.get_x()) - next.x, Math.floor(currentPos.get_y()) - next.y);
+        if (this.path.length > 0) {
+            var next = this.path.shift();
+            console.log('popping path: ', next);
+            this.setCurrentTarget(next.x, next.y);
         }
 
     }
@@ -124,7 +121,6 @@ ShellRobot.prototype.update = function(dt) {
  * @param {number} y Y coordinate.
  */
 ShellRobot.prototype.setCurrentTarget = function(x, y) {
-    //console.log('setting current target', x, y);
     this.currentTargetX = x;
     this.currentTargetY = y;
 };
@@ -133,31 +129,31 @@ ShellRobot.prototype.setCurrentTarget = function(x, y) {
  * Sets a global target position.
  * @param {number} x X coordinate.
  * @param {number} y Y coordinate.
-  */
+ */
 ShellRobot.prototype.setGlobalTarget = function(x, y) {
-    var currentPos = this.getDiscreteBodyPosition();
-    //console.info('Setting global target! ');
-    //console.info('from:', { x:Math.floor(currentPos.x),
-    //                            y:Math.floor(currentPos.y)});
-    //console.info('to:', {x:Math.floor(x), y:Math.floor(y)});
+    var currentPos = this.getPos();
 
-    this.path = this.pathFinder.findPath(
-        { x:Math.floor(currentPos.x),
-          y:Math.floor(currentPos.y)},
-        { x:Math.floor(x),
-          y:Math.floor(y)});
-    //console.info(this.path);
+    this.path = this.pathFinder.findKeypointsPath({
+        x: Math.floor(currentPos.x),
+        y: Math.floor(currentPos.y)
+    }, {
+        x: Math.floor(x),
+        y: Math.floor(y)
+    });
 
-
-
-    this.setCurrentTarget(currentPos.x, currentPos.y);
+    if (!this.path) {
+        this.path = [];
+    }
 };
 
 ShellRobot.prototype.getDiscreteBodyPosition = function() {
     var currentPos = this.body.GetPosition();
     var x = Math.floor(currentPos.get_x());
     var y = Math.floor(currentPos.get_y());
-    return {x:x, y:y};
+    return {
+        x: x,
+        y: y
+    };
 };
 
 /**
