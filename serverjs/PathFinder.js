@@ -95,11 +95,11 @@ Pathfinder.prototype.findKeypointsPath = function(start, goal) {
                     x: curX,
                     y: curY
                 });
-                dx = -path[i].x;
-                dy = -path[i].y;
+                dx = path[i].x;
+                dy = path[i].y;
             }
-            curX += dx;
-            curY += dy;
+            curX += -dx;
+            curY += -dy;
         }
         console.dir(_path);
         return _path;

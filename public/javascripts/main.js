@@ -29,7 +29,7 @@ define([
     var clock = new THREE.Clock();
 
     var camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-    camera.position.z = 18;
+    camera.position.z = 12;
     camera.position.y = 0;
 
     var renderer = new THREE.WebGLRenderer();
@@ -41,6 +41,7 @@ define([
     var character;
     var characters = {};
     var robots = {};
+    var prevRobotBodies = {};
 
     window.paused = false;
     var debug = document.getElementById("debug");
@@ -132,13 +133,41 @@ define([
             for (var i in bodies.robots) {
                 var body = bodies.robots[i];
                 var rb = robots[body.id];
+                body.path.unshift({
+                    x: body.currentTargetX,
+                    y: body.currentTargetY
+                });
                 if (!rb) {
                     var rb = createCharacter();
-                    robots[body.id] = rb;
                     dungeon.add(rb);
+                    rb.pathLine = createLine(body.path);
+                    dungeon.add(rb.pathLine);
+                    rb.curPathLine = createLine(null, []);
+                    dungeon.add(rb.curPathLine);
+                    robots[body.id] = rb;
+
+                    prevRobotBodies[body.id] = body;
                 }
+                var prevBody = prevRobotBodies[body.id];
                 rb.position.set(body.x + 0.5, -body.y + 0.5, 0);
                 rb.quaternion.setFromAxisAngle(new THREE.Vector3(0, 0, 1), body.angle);
+
+                if (pathsDiffer(body.path, prevBody.path)) {
+                    console.log(body.path.length);
+                    dungeon.remove(rb.pathLine);
+                    rb.pathLine = createLine(body.path);
+                    dungeon.add(rb.pathLine);
+
+                    dungeon.remove(rb.curPathLine);
+                    rb.curPathLine = createLine([{
+                        x: body.prevTargetX,
+                        y: body.prevTargetY
+                    }, {
+                        x: body.currentTargetX,
+                        y: body.currentTargetY
+                    }], 0x0000ff);
+                    dungeon.add(rb.curPathLine);
+                }
 
                 if (body.aim >= 0) {
                     var angle = body.angle - (Math.PI - body.aim);
@@ -153,6 +182,8 @@ define([
                 } else {
                     rb.aim.visible = false;
                 }
+
+                prevRobotBodies[body.id] = body;
             }
         }
     });
@@ -186,6 +217,39 @@ define([
         ch.add(ch.aim);
 
         return ch;
+    }
+
+    function createLine(path, color) {
+        var material = new THREE.LineBasicMaterial({
+            color: isNaN(color) ? 0xff0000 : color,
+            linewidth: 2
+        });
+        var geometry = new THREE.Geometry();
+        var vertices = [];
+        if (path) {
+            for (var i = 0; i < path.length; i++) {
+                vertices.push(new THREE.Vector3(path[i].x + 0.5, -path[i].y + 0.5, 0));
+            }
+        } else {
+            for (var i = 0; i < 100; i++) {
+                vertices.push(new THREE.Vector3(0, 0, 0));
+            }
+        }
+        geometry.vertices = vertices;
+        var line = new THREE.Line(geometry, material);
+        return line;
+    }
+
+    function pathsDiffer(a, b) {
+        if (a.length != b.length) {
+            return true;
+        }
+        for (var i = 0; i < a.length; i++) {
+            if (a[i].x != b[i].x || a[i].y != b[i].y) {
+                return true;
+            }
+        }
+        return false;
     }
 
     function resizeHandler(event) {

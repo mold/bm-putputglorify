@@ -80,7 +80,7 @@ var mapWidth = 20,
 
 var mazeGenerator = generateMaze(map, mapWidth, mapHeight);
 
-var testMap = [
+var map = [
     [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
     [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
     [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
@@ -194,6 +194,8 @@ var initWorldBodiesFromMap = function() {
                 if (Object.keys(players).length > 0) {
                     var pos = players[Object.keys(players)[0]].body.GetPosition();
                     shellbot.setGlobalTarget(pos.get_x(), pos.get_y());
+                } else {
+                    shellbot.setGlobalTarget(3 + Math.random() * (w - 6), 3 + Math.random() * (h - 6));
                 }
                 timeUntilNextGlobalTargetUpdate = 8;
             }

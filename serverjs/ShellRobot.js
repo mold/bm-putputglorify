@@ -16,6 +16,10 @@ function ShellRobot(world, x, y, pathFinder) {
 
     this.x = isNaN(x) ? 0 : x;
     this.y = isNaN(y) ? 0 : y;
+    this.currentTargetX = this.x;
+    this.currentTargetY = this.y;
+    this.prevTargetX = this.x;
+    this.prevTargetY = this.y;
     this.setCurrentTarget(this.x, this.y);
     this.aim = -1;
     this.aimPower = 0;
@@ -103,14 +107,13 @@ ShellRobot.prototype.update = function(dt) {
         this.aim = -1;
 
         // Do this when we are close enough to currentTarget
-        if (this.path.length > 0) {
+        if (d < 0.5 && this.path.length > 0) {
             var next = this.path.shift();
             console.log('popping path: ', next);
             this.setCurrentTarget(next.x, next.y);
         }
 
     }
-    this.lastPoppedTime += dt;
     this.lastErrorX = errorX;
     this.lastErrorY = errorY;
 };
@@ -121,6 +124,8 @@ ShellRobot.prototype.update = function(dt) {
  * @param {number} y Y coordinate.
  */
 ShellRobot.prototype.setCurrentTarget = function(x, y) {
+    this.prevTargetX = this.currentTargetX;
+    this.prevTargetY = this.currentTargetY;
     this.currentTargetX = x;
     this.currentTargetY = y;
 };
@@ -141,8 +146,13 @@ ShellRobot.prototype.setGlobalTarget = function(x, y) {
         y: Math.floor(y)
     });
 
-    if (!this.path) {
+    if (!this.path || this.path.length == 0) {
         this.path = [];
+    } else {
+        var next = this.path.shift();
+        console.log('popping path: ', next);
+        this.setCurrentTarget(Math.floor(this.x), Math.floor(this.y));
+        this.setCurrentTarget(next.x, next.y);
     }
 };
 
