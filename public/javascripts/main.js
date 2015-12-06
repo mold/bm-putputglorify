@@ -29,7 +29,7 @@ define([
     var clock = new THREE.Clock();
 
     var camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-    camera.position.z = 12;
+    camera.position.z = 18;
     camera.position.y = 0;
 
     var renderer = new THREE.WebGLRenderer();
@@ -44,6 +44,8 @@ define([
     var prevRobotBodies = {};
 
     window.paused = false;
+    var robotPathDebug = false;
+
     var debug = document.getElementById("debug");
     var qrButton = document.getElementById("qr-button");
     var overlay = document.getElementById("overlay");
@@ -133,17 +135,21 @@ define([
             for (var i in bodies.robots) {
                 var body = bodies.robots[i];
                 var rb = robots[body.id];
-                body.path.unshift({
-                    x: body.currentTargetX,
-                    y: body.currentTargetY
-                });
+                if (robotPathDebug && body.path) {
+                    body.path.unshift({
+                        x: body.currentTargetX,
+                        y: body.currentTargetY
+                    });
+                }
                 if (!rb) {
                     var rb = createCharacter();
                     dungeon.add(rb);
-                    rb.pathLine = createLine(body.path);
-                    dungeon.add(rb.pathLine);
-                    rb.curPathLine = createLine(null, []);
-                    dungeon.add(rb.curPathLine);
+                    if (robotPathDebug) {
+                        rb.pathLine = createLine(body.path);
+                        dungeon.add(rb.pathLine);
+                        rb.curPathLine = createLine(null, []);
+                        dungeon.add(rb.curPathLine);
+                    }
                     robots[body.id] = rb;
 
                     prevRobotBodies[body.id] = body;
@@ -152,8 +158,7 @@ define([
                 rb.position.set(body.x + 0.5, -body.y + 0.5, 0);
                 rb.quaternion.setFromAxisAngle(new THREE.Vector3(0, 0, 1), body.angle);
 
-                if (pathsDiffer(body.path, prevBody.path)) {
-                    console.log(body.path.length);
+                if (robotPathDebug && pathsDiffer(body.path, prevBody.path)) {
                     dungeon.remove(rb.pathLine);
                     rb.pathLine = createLine(body.path);
                     dungeon.add(rb.pathLine);
@@ -222,6 +227,8 @@ define([
     function createLine(path, color) {
         var material = new THREE.LineBasicMaterial({
             color: isNaN(color) ? 0xff0000 : color,
+            opacity: 0.5,
+            transparent: true,
             linewidth: 2
         });
         var geometry = new THREE.Geometry();
@@ -230,10 +237,6 @@ define([
             for (var i = 0; i < path.length; i++) {
                 vertices.push(new THREE.Vector3(path[i].x + 0.5, -path[i].y + 0.5, 0));
             }
-        } else {
-            for (var i = 0; i < 100; i++) {
-                vertices.push(new THREE.Vector3(0, 0, 0));
-            }
         }
         geometry.vertices = vertices;
         var line = new THREE.Line(geometry, material);
@@ -241,6 +244,9 @@ define([
     }
 
     function pathsDiffer(a, b) {
+        if (!(a instanceof Array) || !(b instanceof Array)) {
+            return false;
+        }
         if (a.length != b.length) {
             return true;
         }

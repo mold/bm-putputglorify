@@ -16,6 +16,8 @@ function ShellRobot(world, x, y, pathFinder) {
 
     this.x = isNaN(x) ? 0 : x;
     this.y = isNaN(y) ? 0 : y;
+    this.prevX = this.x;
+    this.prevY = this.y;
     this.currentTargetX = this.x;
     this.currentTargetY = this.y;
     this.prevTargetX = this.x;
@@ -48,9 +50,12 @@ function ShellRobot(world, x, y, pathFinder) {
     this.body = body;
 
     this.pathFinder = pathFinder;
-    this.path = [];
+    this.path = null;
     this.lastPoppedTime = 0;
 
+    this._stuckTime = 0;
+    this._isStuck = false;
+    this._targetReached = true;
 }
 
 /**
@@ -75,7 +80,6 @@ ShellRobot.prototype.update = function(dt) {
     I = ShellRobot.KI * (errorY * dt);
     D = ShellRobot.KD * (errorY - this.lastErrorY) / dt;
     var controlY = P + I + D;
-
 
     // correct position
     if (Math.max(controlX, controlY) > ShellRobot.CONTROL_MIN) {
@@ -103,19 +107,40 @@ ShellRobot.prototype.update = function(dt) {
                 this.aim = -1;
             }
         }
+
+        if (Math.floor(this.x) == Math.floor(this.prevX) && Math.floor(this.y) == Math.floor(this.prevY)) {
+            this._stuckTime += dt;
+            if (this._stuckTime > ShellRobot.STUCK_TIME) {
+                this._isStuck = true;
+            }
+        } else {
+            this._stuckTime = 0;
+            this._isStuck = false;
+        }
     } else {
         this.aim = -1;
 
         // Do this when we are close enough to currentTarget
-        if (d < 0.5 && this.path.length > 0) {
-            var next = this.path.shift();
-            console.log('popping path: ', next);
-            this.setCurrentTarget(next.x, next.y);
+        if (d < 0.5) {
+            if (this.path) {
+                if (this.path.length > 0) {
+                    var next = this.path.shift();
+                    //console.log('popping path: ', next);
+                    this.setCurrentTarget(next.x, next.y);
+                } else {
+                    this.path = null;
+                    this._targetReached = true;
+                }
+            } else {
+                this._targetReached = true;
+            }
         }
 
     }
     this.lastErrorX = errorX;
     this.lastErrorY = errorY;
+    this.prevX = this.x;
+    this.prevY = this.y;
 };
 
 /**
@@ -128,6 +153,7 @@ ShellRobot.prototype.setCurrentTarget = function(x, y) {
     this.prevTargetY = this.currentTargetY;
     this.currentTargetX = x;
     this.currentTargetY = y;
+    this._targetReached = false;
 };
 
 /**
@@ -139,21 +165,30 @@ ShellRobot.prototype.setGlobalTarget = function(x, y) {
     var currentPos = this.getPos();
 
     this.path = this.pathFinder.findKeypointsPath({
-        x: Math.floor(currentPos.x),
-        y: Math.floor(currentPos.y)
+        x: Math.round(currentPos.x),
+        y: Math.round(currentPos.y)
     }, {
-        x: Math.floor(x),
-        y: Math.floor(y)
+        x: Math.round(x),
+        y: Math.round(y)
     });
 
     if (!this.path || this.path.length == 0) {
-        this.path = [];
+        this.path = null;
     } else {
         var next = this.path.shift();
-        console.log('popping path: ', next);
-        this.setCurrentTarget(Math.floor(this.x), Math.floor(this.y));
+        //console.log('popping path: ', next);
+        this.setCurrentTarget(Math.round(currentPos.x), Math.round(currentPos.y));
         this.setCurrentTarget(next.x, next.y);
     }
+    this._targetReached = false;
+};
+
+ShellRobot.prototype.targetReached = function() {
+    return this._targetReached;
+};
+
+ShellRobot.prototype.isStuck = function() {
+    return this._isStuck;
 };
 
 ShellRobot.prototype.getDiscreteBodyPosition = function() {
@@ -193,7 +228,7 @@ ShellRobot.CONTROL_MAX = 4; // roof where the PID output is cut
 ShellRobot.SLING_FORCE = 5000; // force in banana units...
 ShellRobot.SLING_DELAY = 0.3; // delay in seconds between slings
 // pathFinder parameters
-ShellRobot.POP_DELAY = 0.001 * 300; // delay in seconds
+ShellRobot.STUCK_TIME = 5;
 
 /**
  * Controls how fast the sling meter is refilled based on the aiming power.
