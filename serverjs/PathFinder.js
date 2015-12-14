@@ -66,8 +66,8 @@ Pathfinder.prototype.findPath = function(start, goal) {
         var tmp = queue.remove();
         var neighbors = this._get_unvisited_neighbors(tmp, mapCopy);
         for (var i = 0; i < neighbors.length; i++) {
-            var x = neighbors[i].x;
-            y = neighbors[i].y;
+            var x = neighbors[i].x,
+                y = neighbors[i].y;
             mapCopy[y][x] = this._get_direction(neighbors[i], tmp); // Mark neighbor as visited
             if (x === goal.x && y === goal.y) {
                 return this._backtrack(goal, mapCopy);
@@ -83,25 +83,25 @@ Pathfinder.prototype.findPath = function(start, goal) {
 Pathfinder.prototype.findKeypointsPath = function(start, goal) {
     var path = this.findPath(start, goal);
     if (path) {
-        console.dir(path);
+        //console.dir(path);
         var _path = [];
         var curX = start.x,
             curY = start.y;
         var dx = 0,
             dy = 0;
         for (var i = 0; i < path.length; i++) {
-            if (path[i].x != dx || path[i].y != dy) {
+            if (path[i].x != dx || path[i].y != dy || i == path.length - 1) {
                 _path.push({
                     x: curX,
                     y: curY
                 });
-                dx = -path[i].x;
-                dy = -path[i].y;
+                dx = path[i].x;
+                dy = path[i].y;
             }
             curX += dx;
             curY += dy;
         }
-        console.dir(_path);
+        //console.dir(_path);
         return _path;
     }
     return path;
@@ -242,7 +242,7 @@ Pathfinder.prototype._backtrack = function(goal, mapCopy) {
                 };
             case "up":
                 return {
-                    "y": 1,
+                    "y": -1,
                     "x": 0
                 };
             case "upright":
@@ -253,12 +253,12 @@ Pathfinder.prototype._backtrack = function(goal, mapCopy) {
             case "left":
                 return {
                     "y": 0,
-                    "x": 1
+                    "x": -1
                 };
             case "right":
                 return {
                     "y": 0,
-                    "x": -1
+                    "x": 1
                 };
             case "downleft":
                 return {
@@ -267,7 +267,7 @@ Pathfinder.prototype._backtrack = function(goal, mapCopy) {
                 };
             case "down":
                 return {
-                    "y": -1,
+                    "y": 1,
                     "x": 0
                 };
             case "downright":

@@ -167,7 +167,17 @@ var initWorldBodiesFromMap = function() {
     world = new Box2D.b2World(new Box2D.b2Vec2(0.0, 0.0), true);
 
     // add a shellbot
-    var shellbot = new ShellRobot(world, w / 2, h / 2, pathFinder);
+    var x = w / 2,
+        y = h / 2;
+    for (var i = Math.floor(h / 2) - 1; i < h / 2 + 2; i++) {
+        for (var j = Math.floor(w / 2) - 1; j < w / 2 + 2; j++) {
+            if (map[i][j] == 0) {
+                x = j;
+                y = i;
+            }
+        }
+    }
+    var shellbot = new ShellRobot(world, x, y, pathFinder);
     robots[shellbot.id] = shellbot;
     var timeUntilNextGlobalTargetUpdate = 1;
     var targetPoint = 0;
@@ -190,12 +200,11 @@ var initWorldBodiesFromMap = function() {
             var rb = robots[i];
             rb.update(delta);
             var body = rb.body;
-            if (timeUntilNextGlobalTargetUpdate <= 0) {
+            if (shellbot.targetReached() || shellbot.isStuck()) {
                 if (Object.keys(players).length > 0) {
                     var pos = players[Object.keys(players)[0]].body.GetPosition();
                     shellbot.setGlobalTarget(pos.get_x(), pos.get_y());
                 }
-                timeUntilNextGlobalTargetUpdate = 8;
             }
 
             var pos = rb.getPos();
