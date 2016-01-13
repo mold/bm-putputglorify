@@ -198,7 +198,7 @@ var initWorldBodiesFromMap = function() {
         // update the robots
         for (var i in robots) {
             var rb = robots[i];
-            rb.update(delta);
+            rb.update(fixedTimeStep);
             var body = rb.body;
             if (shellbot.targetReached() || shellbot.isStuck()) {
                 if (Object.keys(players).length > 0) {
