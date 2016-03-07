@@ -95,7 +95,7 @@ define([
     socket.on("body-destroy", function(body) {
         console.info("client disconnected", body);
         if (body.id in characters) {
-            dungeon.remove(characters[body.id]);
+            dungeon.remove(characters[body.id].obj);
             delete characters[body.id];
         }
     });
@@ -106,89 +106,103 @@ define([
             //var coords = [];
             for (i in bodies.players) {
                 var body = bodies.players[i];
-                var ch = characters[body.id];
-                if (!ch) {
-                    var ch = createCharacter(body.color);
-                    characters[body.id] = ch;
-                    dungeon.add(ch);
-                }
-                ch.position.set(body.x + 0.5, -body.y + 0.5, 0);
-                ch.quaternion.setFromAxisAngle(new THREE.Vector3(0, 0, 1), body.angle);
 
-                if (body.aim >= 0) {
-                    var angle = body.angle - (Math.PI - body.aim);
-                    var scale = 0.5 + Math.pow(body.aimPower, 2);
-                    var vibrateX = Math.random() * Math.pow(body.aimPower, 2) * 0.1;
-                    var vibrateY = Math.random() * Math.pow(body.aimPower, 2) * 0.1;
-                    var distance = 0.6 + 0.5 * body.aimPower;
-                    ch.aim.scale.set(scale, scale, 1);
-                    ch.aim.position.set(Math.cos(angle) * distance + vibrateX, -Math.sin(angle) * distance + vibrateY, 0);
-                    ch.aim.visible = true;
-                    ch.aim.quaternion.setFromAxisAngle(new THREE.Vector3(0, 0, 1), Math.PI * 3 / 2 - angle);
-                } else {
-                    ch.aim.visible = false;
-                }
+                if (typeof characters[body.id] == "undefined") {
+                    characters[body.id] = {
+                        body: body,
+                        obj: null
+                    };
+                    load();
 
+                } else if (characters[body.id].obj) {
+                    var ch = characters[body.id].obj;
+                    ch.position.set(body.x + 0.5, -body.y + 0.5, 0);
+                    ch.quaternion.setFromAxisAngle(new THREE.Vector3(0, 0, 1), body.angle);
+
+                    if (body.aim >= 0) {
+                        var angle = body.angle - (Math.PI - body.aim);
+                        var scale = 0.5 + Math.pow(body.aimPower, 2);
+                        var vibrateX = Math.random() * Math.pow(body.aimPower, 2) * 0.1;
+                        var vibrateY = Math.random() * Math.pow(body.aimPower, 2) * 0.1;
+                        var distance = 0.6 + 0.5 * body.aimPower;
+                        ch.aim.scale.set(scale, scale, 1);
+                        ch.aim.position.set(Math.cos(angle) * distance + vibrateX, -Math.sin(angle) * distance + vibrateY, 0);
+                        ch.aim.visible = true;
+                        ch.aim.quaternion.setFromAxisAngle(new THREE.Vector3(0, 0, 1), Math.PI * 3 / 2 - angle);
+                    } else {
+                        ch.aim.visible = false;
+                    }
+                }
                 //coords.push('( ' + (Math.floor(10 * body.x) / 10) + ' , ' + (Math.floor(10 * body.y) / 10) + ' , ' + (Math.floor(10 * body.aimPower) / 10) + ' )');
             }
             //debug.innerHTML = coords.join(' ');
             for (var i in bodies.robots) {
                 var body = bodies.robots[i];
-                var rb = robots[body.id];
-                if (robotPathDebug && body.path) {
-                    body.path.unshift({
-                        x: body.currentTargetX,
-                        y: body.currentTargetY
-                    });
-                }
-                if (!rb) {
-                    var rb = createCharacter();
-                    dungeon.add(rb);
-                    if (robotPathDebug) {
+
+                if (typeof robots[body.id] == "undefined") {
+                    robots[body.id] = {
+                        body: body,
+                        obj: null
+                    };
+                    load();
+
+                } else if (robots[body.id].obj) {
+                    var rb = robots[body.id].obj;
+                    if (robotPathDebug && body.path) {
+                        body.path.unshift({
+                            x: body.currentTargetX,
+                            y: body.currentTargetY
+                        });
+                    }
+                    if (!rb) {
+                        var rb = createCharacter();
+                        dungeon.add(rb);
+                        if (robotPathDebug) {
+                            rb.pathLine = createLine(body.path);
+                            dungeon.add(rb.pathLine);
+                            rb.curPathLine = createLine(null, []);
+                            dungeon.add(rb.curPathLine);
+                        }
+                        robots[body.id] = rb;
+
+                        prevRobotBodies[body.id] = body;
+                    }
+                    var prevBody = prevRobotBodies[body.id];
+                    rb.position.set(body.x + 0.5, -body.y + 0.5, 0);
+                    rb.quaternion.setFromAxisAngle(new THREE.Vector3(0, 0, 1), body.angle);
+
+                    if (robotPathDebug && pathsDiffer(body.path, prevBody.path)) {
+                        dungeon.remove(rb.pathLine);
                         rb.pathLine = createLine(body.path);
                         dungeon.add(rb.pathLine);
-                        rb.curPathLine = createLine(null, []);
+
+                        dungeon.remove(rb.curPathLine);
+                        rb.curPathLine = createLine([{
+                            x: body.prevTargetX,
+                            y: body.prevTargetY
+                        }, {
+                            x: body.currentTargetX,
+                            y: body.currentTargetY
+                        }], 0x0000ff);
                         dungeon.add(rb.curPathLine);
                     }
-                    robots[body.id] = rb;
+
+                    if (body.aim >= 0) {
+                        var angle = body.angle - (Math.PI - body.aim);
+                        var scale = 0.5 + Math.pow(body.aimPower, 2);
+                        var vibrateX = Math.random() * Math.pow(body.aimPower, 2) * 0.1;
+                        var vibrateY = Math.random() * Math.pow(body.aimPower, 2) * 0.1;
+                        var distance = 0.6 + 0.5 * body.aimPower;
+                        rb.aim.scale.set(scale, scale, 1);
+                        rb.aim.position.set(Math.cos(angle) * distance + vibrateX, -Math.sin(angle) * distance + vibrateY, 0);
+                        rb.aim.visible = true;
+                        rb.aim.quaternion.setFromAxisAngle(new THREE.Vector3(0, 0, 1), Math.PI * 3 / 2 - angle);
+                    } else {
+                        rb.aim.visible = false;
+                    }
 
                     prevRobotBodies[body.id] = body;
                 }
-                var prevBody = prevRobotBodies[body.id];
-                rb.position.set(body.x + 0.5, -body.y + 0.5, 0);
-                rb.quaternion.setFromAxisAngle(new THREE.Vector3(0, 0, 1), body.angle);
-
-                if (robotPathDebug && pathsDiffer(body.path, prevBody.path)) {
-                    dungeon.remove(rb.pathLine);
-                    rb.pathLine = createLine(body.path);
-                    dungeon.add(rb.pathLine);
-
-                    dungeon.remove(rb.curPathLine);
-                    rb.curPathLine = createLine([{
-                        x: body.prevTargetX,
-                        y: body.prevTargetY
-                    }, {
-                        x: body.currentTargetX,
-                        y: body.currentTargetY
-                    }], 0x0000ff);
-                    dungeon.add(rb.curPathLine);
-                }
-
-                if (body.aim >= 0) {
-                    var angle = body.angle - (Math.PI - body.aim);
-                    var scale = 0.5 + Math.pow(body.aimPower, 2);
-                    var vibrateX = Math.random() * Math.pow(body.aimPower, 2) * 0.1;
-                    var vibrateY = Math.random() * Math.pow(body.aimPower, 2) * 0.1;
-                    var distance = 0.6 + 0.5 * body.aimPower;
-                    rb.aim.scale.set(scale, scale, 1);
-                    rb.aim.position.set(Math.cos(angle) * distance + vibrateX, -Math.sin(angle) * distance + vibrateY, 0);
-                    rb.aim.visible = true;
-                    rb.aim.quaternion.setFromAxisAngle(new THREE.Vector3(0, 0, 1), Math.PI * 3 / 2 - angle);
-                } else {
-                    rb.aim.visible = false;
-                }
-
-                prevRobotBodies[body.id] = body;
             }
         }
     });
@@ -220,6 +234,9 @@ define([
         ch.aim.setSize(1, 1);
         ch.aim.visible = false;
         ch.add(ch.aim);
+
+        var light = new THREE.PointLight(0xFFF6BB, 1.0, 7.0);
+        ch.add(light);
 
         return ch;
     }
@@ -278,15 +295,16 @@ define([
         dungeon.position.set(-map[0].length / 2, map.length / 2 - 1, 0);
         scene.add(dungeon);
 
-        for (var i in characters)
-            dungeon.add(characters[i]);
-        for (var i in robots)
-            dungeon.add(robots[i]);
-
-        // TODO: the light shader is broken, don't add more lights!
-        var light = new THREE.PointLight(0xFFF6BB, 1.0, 7.0);
-        light.position.set(map[0].length / 2 + 0.5, -map.length / 2 + 1, 0);
-        dungeon.add(light);
+        for (var i in characters) {
+            var ch = characters[i];
+            ch.obj = createCharacter(ch.body.color);
+            dungeon.add(ch.obj);
+        }
+        for (var i in robots) {
+            var rb = robots[i];
+            rb.obj = createCharacter();
+            dungeon.add(rb.obj);
+        }
     }
 
     function init() {
