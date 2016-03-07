@@ -2,7 +2,7 @@
 A nice little game for three persons, a few smartphones and a bigger screen.
 
 ## SETUP
-You will need [__Node.js__](https://nodejs.org/en/) (npm) and [__Bower__](http://bower.io/) to run the server. Clone the repo, switch to the project directory and run
+You will need [__Node.js__](https://nodejs.org/en/) (npm) to run the server. Clone the repo, switch to the project directory and run
 
 ```
 npm install
