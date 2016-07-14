@@ -226,39 +226,38 @@ var initWorldBodiesFromMap = function() {
             }
         }
 
-        if (io.sockets.sockets) {
-            for (var i in clientData) {
-                var data = clientData[i];
-                var player = players[i];
-                var body = data.body;
-                // must grab data this way since the object is
-                // converted to pure JSON on the way to the client
-                var pos = body.GetPosition();
-                data.x = pos.get_x();
-                data.y = pos.get_y();
-                data.angle = 2 * Math.PI - body.GetAngle();
-                data.aim = player.aiming ? data.aim : -1;
 
-                // simulate ground and wind friction
-                // so that they don't roll forever
-                var v = body.GetLinearVelocity();
-                if (v.Length() > 0 && v.Length() < maxLinearVelocity) {
-                    var x = v.get_x();
-                    var y = v.get_y();
-                    var linearDamping = linearDampingFunction(v.Length());
-                    body.ApplyForce(new Box2D.b2Vec2(-x * linearDamping, -y * linearDamping), body.GetWorldCenter());
-                    // this is very arbitrary
-                    // TODO: check so that it doesn't starts to spin faster
-                    body.ApplyAngularImpulse(-body.GetAngularVelocity() * linearDamping * angularDamping);
-                }
+        for (var i in clientData) {
+            var data = clientData[i];
+            var player = players[i];
+            var body = data.body;
+            // must grab data this way since the object is
+            // converted to pure JSON on the way to the client
+            var pos = body.GetPosition();
+            data.x = pos.get_x();
+            data.y = pos.get_y();
+            data.angle = 2 * Math.PI - body.GetAngle();
+            data.aim = player.aiming ? data.aim : -1;
+
+            // simulate ground and wind friction
+            // so that they don't roll forever
+            var v = body.GetLinearVelocity();
+            if (v.Length() > 0 && v.Length() < maxLinearVelocity) {
+                var x = v.get_x();
+                var y = v.get_y();
+                var linearDamping = linearDampingFunction(v.Length());
+                body.ApplyForce(new Box2D.b2Vec2(-x * linearDamping, -y * linearDamping), body.GetWorldCenter());
+                // this is very arbitrary
+                // TODO: check so that it doesn't starts to spin faster
+                body.ApplyAngularImpulse(-body.GetAngularVelocity() * linearDamping * angularDamping);
             }
-            io.sockets.sockets.forEach(function(sock) {
-                sock.emit("bodies", {
-                    "players": clientData,
-                    "robots": robots
-                });
-            });
         }
+
+        io.emit("bodies", {
+            "players": clientData,
+            "robots": robots
+        });
+
         // destroy old players
         if (destroy_list.length > 0) {
             destroy_list.forEach(function(body) {
@@ -313,9 +312,7 @@ io.of('/client').on('connection', function(socket) {
     };
 
     // tell everybody!
-    io.sockets.sockets.forEach(function(sock) {
-        sock.emit("body-create", clientData[socket.id]);
-    });
+    socket.broadcast.emit("body-create", clientData[socket.id]);
 
     // send a message to the client
     socket.emit("connected", clientData[socket.id]);
@@ -341,9 +338,8 @@ io.of('/client').on('connection', function(socket) {
     });
     socket.on('disconnect', function() {
         // tell everybody!
-        io.sockets.sockets.forEach(function(sock) {
-            sock.emit("body-destroy", clientData[socket.id]);
-        });
+        io.emit("body-destroy", clientData[socket.id]);
+
         console.log('Client disconnected!');
         var player = players[socket.id];
         destroy_list.push(player.body);
