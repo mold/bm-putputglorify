@@ -23,3 +23,5 @@ Either you can run a client directly in the viewer by clicking "Join", or you ca
 You can also connect a client from an external device by changing _localhost_ to the ip-adress of the computer. On windows the QR-code/client adress in the viewer will unfortunately not work :(
 
 # HAPPY PUTTING!
+
+![bm-putputglorify in action](https://github.com/mold/bm-putputglorify/raw/master/put-put.png "bm-putputglorify")
