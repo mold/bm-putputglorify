@@ -23,13 +23,13 @@
   "homepage": "https://github.com/mold/bm-putputglorify#readme",
   "private": true,
   "dependencies": {
-    "box2d.js": "^1.0.0",
     "express": "^4.13.3",
-    "lodash": "^3.10.1",
+    "lodash": "^4.17.11",
     "mersenne-twister": "^1.0.1",
     "node-gameloop": "^0.1.0",
+    "planck-js": "^0.3.5",
     "prototypes": "^1.1.0",
-    "socket.io": "^1.3.7",
+    "socket.io": "^2.2.0",
     "three": "^0.73.0"
   }
 }

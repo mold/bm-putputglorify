@@ -2,8 +2,7 @@ var express = require('express');
 var app = express();
 var http = require('http').Server(app);
 var io = require('socket.io')(http);
-var b2 = require('box2d.js');
-var Box2D = b2.Box2D;
+var planck = require('planck-js');
 var gameloop = require('node-gameloop');
 var MersenneTwister = require('mersenne-twister');
 var _ = require('lodash');
@@ -17,13 +16,17 @@ var generateMaze = require('./serverjs/MazeGenerator');
 var port = 3004;
 var root = process.env.ROOT_URL;
 
+http.listen(port, function() {
+    console.log(`Listening on port: ${port}`);
+});
+
 
 if (!root) {
     // take the first ip that we can find!
     var os = require('os');
     var networkInterfaces = os.networkInterfaces();
     for (var type in networkInterfaces) {
-        if (type.match(/^wlan/g)) {
+        if (type.match(/^wl.*/g)) {
             root = 'http://' + networkInterfaces[type][0].address + ':' + port + '/';
         }
     }
@@ -37,6 +40,7 @@ var latestBody;
 var groundMaterial;
 
 var world;
+var Vec2 = planck.Vec2;
 
 var RandomEngine = new MersenneTwister(40);
 
@@ -140,8 +144,6 @@ function releaseClientColor(c) {
 
 var initWorldBodiesFromMap = function() {
     // create a rectangle for each wall piece
-    var shape = new Box2D.b2PolygonShape();
-    shape.SetAsBox(0.4, 0.4);
 
     for (var i = 0; i < map.length; i++) {
         bodyMap.push([]);
@@ -149,10 +151,11 @@ var initWorldBodiesFromMap = function() {
             var elem = map[i][j];
             if (0 != elem) {
                 // create a static body
-                var bodyDef = new Box2D.b2BodyDef();
-                bodyDef.set_position(new Box2D.b2Vec2(j, i));
-                var body = world.CreateBody(bodyDef);
-                body.CreateFixture(shape, 5.0); // density 5
+                var body = world.createBody();
+                body.setPosition(Vec2(j, i));
+            
+                var fix = body.createFixture(planck.Box(0.4, 0.4)); 
+                fix.setDensity(5.0); // density 5
 
                 bodyMap[i].push(body);
             }
@@ -164,7 +167,7 @@ var initWorldBodiesFromMap = function() {
 // Server main init
 (function() {
     // no gravity
-    world = new Box2D.b2World(new Box2D.b2Vec2(0.0, 0.0), true);
+    world = planck.World(Vec2(0.0, 0.0), true);
 
     // add a shellbot
     var x = w / 2,
@@ -190,8 +193,8 @@ var initWorldBodiesFromMap = function() {
     // Start the physics simulation loop
     gameloop.setGameLoop(function(delta) {
         //world.step(fixedTimeStep, delta, maxSubSteps);
-        world.Step(fixedTimeStep, 2, 2);
-        world.ClearForces();
+        world.step(fixedTimeStep, 2, 2);
+        world.clearForces();
 
         timeUntilNextGlobalTargetUpdate -= delta;
 
@@ -202,27 +205,27 @@ var initWorldBodiesFromMap = function() {
             var body = rb.body;
             if (shellbot.targetReached() || shellbot.isStuck()) {
                 if (Object.keys(players).length > 0) {
-                    var pos = players[Object.keys(players)[0]].body.GetPosition();
-                    shellbot.setGlobalTarget(pos.get_x(), pos.get_y());
+                    var pos = players[Object.keys(players)[0]].body.getPosition();
+                    shellbot.setGlobalTarget(pos.x, pos.y);
                 }
             }
 
             var pos = rb.getPos();
             rb.x = pos.x;
             rb.y = pos.y;
-            rb.angle = 2 * Math.PI - body.GetAngle();
+            rb.angle = 2 * Math.PI - body.getAngle();
 
             // simulate ground and wind friction
             // so that they don't roll forever
-            var v = body.GetLinearVelocity();
-            if (v.Length() > 0 && v.Length() < maxLinearVelocity) {
-                var x = v.get_x();
-                var y = v.get_y();
-                var linearDamping = linearDampingFunction(v.Length());
-                body.ApplyForce(new Box2D.b2Vec2(-x * linearDamping, -y * linearDamping), body.GetWorldCenter());
+            var v = body.getLinearVelocity();
+            if (v.length() > 0 && v.length() < maxLinearVelocity) {
+                var x = v.x;
+                var y = v.y;
+                var linearDamping = linearDampingFunction(v.length());
+                body.applyForce(Vec2(-x * linearDamping, -y * linearDamping), body.getWorldCenter());
                 // this is very arbitrary
                 // TODO: check so that it doesn't starts to spin faster
-                body.ApplyAngularImpulse(-body.GetAngularVelocity() * linearDamping * angularDamping);
+                body.applyAngularImpulse(-body.getAngularVelocity() * linearDamping * angularDamping);
             }
         }
 
@@ -233,23 +236,23 @@ var initWorldBodiesFromMap = function() {
             var body = data.body;
             // must grab data this way since the object is
             // converted to pure JSON on the way to the client
-            var pos = body.GetPosition();
-            data.x = pos.get_x();
-            data.y = pos.get_y();
-            data.angle = 2 * Math.PI - body.GetAngle();
+            var pos = body.getPosition();
+            data.x = pos.x;
+            data.y = pos.y;
+            data.angle = 2 * Math.PI - body.getAngle();
             data.aim = player.aiming ? data.aim : -1;
 
             // simulate ground and wind friction
             // so that they don't roll forever
-            var v = body.GetLinearVelocity();
-            if (v.Length() > 0 && v.Length() < maxLinearVelocity) {
-                var x = v.get_x();
-                var y = v.get_y();
-                var linearDamping = linearDampingFunction(v.Length());
-                body.ApplyForce(new Box2D.b2Vec2(-x * linearDamping, -y * linearDamping), body.GetWorldCenter());
+            var v = body.getLinearVelocity();
+            if (v.length() > 0 && v.length() < maxLinearVelocity) {
+                var x = v.x;
+                var y = v.y;
+                var linearDamping = linearDampingFunction(v.length());
+                body.applyForce(Vec2(-x * linearDamping, -y * linearDamping), body.getWorldCenter());
                 // this is very arbitrary
                 // TODO: check so that it doesn't starts to spin faster
-                body.ApplyAngularImpulse(-body.GetAngularVelocity() * linearDamping * angularDamping);
+                body.applyAngularImpulse(-body.getAngularVelocity() * linearDamping * angularDamping);
             }
         }
 
@@ -261,7 +264,7 @@ var initWorldBodiesFromMap = function() {
         // destroy old players
         if (destroy_list.length > 0) {
             destroy_list.forEach(function(body) {
-                world.DestroyBody(body);
+                world.destroyBody(body);
             });
             destroy_list.length = 0;
         }
@@ -284,18 +287,15 @@ io.of('/').on('connection', function(socket) {
 // This namespace is for the player
 io.of('/client').on('connection', function(socket) {
     // create a circular dynamic body in the middle
-    var shape = new Box2D.b2CircleShape();
-    shape.set_m_radius(0.5);
-    var bodyDef = new Box2D.b2BodyDef();
-    bodyDef.set_type(Box2D.b2_dynamicBody);
-    bodyDef.set_position(new Box2D.b2Vec2(w / 2, h / 2));
-    var fixDef = new Box2D.b2FixtureDef();
-    fixDef.set_density(7.0);
-    fixDef.set_friction(1.0);
-    fixDef.set_restitution(0.5); // bounciness - higher is bouncier
-    fixDef.set_shape(shape);
-    var body = world.CreateBody(bodyDef);
-    body.CreateFixture(fixDef);
+    var body = world
+        .createBody()
+        .setDynamic();
+    body.setPosition(Vec2(w / 2, h / 2));
+    
+    var fix = body.createFixture(planck.Circle(0.5))
+    fix.setDensity(7.0);
+    fix.setFriction(1.0);
+    fix.setRestitution(0.5); // bounciness - higher is bouncier
 
     players[socket.id] = {
         body: body,
@@ -320,7 +320,7 @@ io.of('/client').on('connection', function(socket) {
     console.log('Client connected! Id:', socket.id);
     socket.on("shot-fired", function shotFired(msg) {
         var body = players[socket.id].body;
-        body.ApplyForce(new Box2D.b2Vec2(msg.deltaX * msg.power * 20, msg.deltaY * msg.power * 20), body.GetWorldCenter());
+        body.applyForce(Vec2(msg.deltaX * msg.power * 20, msg.deltaY * msg.power * 20), body.getWorldCenter());
 
         players[socket.id].aiming = false;
     });
@@ -348,7 +348,4 @@ io.of('/client').on('connection', function(socket) {
         delete clientData[socket.id];
 
     });
-});
-http.listen(port, function() {
-    console.log('Listening on port: 3004');
 });
