@@ -1,8 +1,8 @@
 uniform sampler2D spritemap;
-#if MAX_POINT_LIGHTS > 0
-uniform vec3 pointLightColor[MAX_POINT_LIGHTS];
-uniform vec3 pointLightPosition[MAX_POINT_LIGHTS];
-uniform float pointLightDistance[MAX_POINT_LIGHTS];
+#if NUM_POINT_LIGHTS > 0
+uniform vec3 pointLightColor[NUM_POINT_LIGHTS];
+uniform vec3 pointLightPosition[NUM_POINT_LIGHTS];
+uniform float pointLightDistance[NUM_POINT_LIGHTS];
 #endif
 
 varying vec2 vUv;
@@ -15,9 +15,9 @@ void main() {
     vec3 addedLights = vec3(0.0, 0.0, 0.0);
     float dist = 1.0;
 
-    #if MAX_POINT_LIGHTS > 0
+    #if NUM_POINT_LIGHTS > 0
     
-    for(int l = 0; l < MAX_POINT_LIGHTS; l++) {
+    for(int l = 0; l < NUM_POINT_LIGHTS; l++) {
         float d = min(1.0, length(ceil(vecPos) - pointLightPosition[l]) / pointLightDistance[l]);
         dist = min(dist, d);
         float light = 1.0-d;
