@@ -1,11 +1,11 @@
 define([
     "THREE",
-    "Wall",
-    "AssetManager"
+    "game/AssetManager",
+    "game/obj/Wall"
 ], function(
     THREE,
-    Wall,
-    AssetManager
+    AssetManager,
+    Wall
 ) {
 
     function Dungeon(map) {

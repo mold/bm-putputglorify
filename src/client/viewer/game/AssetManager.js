@@ -1,8 +1,4 @@
-define([
-	"THREE"
-], function(
-	THREE
-) {
+define(["THREE"], function (THREE) {
 
 	var AssetManager = {};
 
@@ -34,7 +30,7 @@ define([
 
 	function init() {
 		var loadManager = new THREE.LoadingManager();
-		loadManager.onLoad = function() {
+		loadManager.onLoad = function () {
 			hasLoaded = true;
 			for (var i = 0; i < loadCallbacks.length; i++) {
 				loadCallbacks[i]();
@@ -44,7 +40,7 @@ define([
 		var imgLoader = new THREE.ImageLoader(loadManager);
 
 		function imageCallback(name) {
-			return function(img) {
+			return function (img) {
 				AssetManager.images[name] = img;
 			};
 		}
@@ -54,7 +50,7 @@ define([
 		var shaderLoader = new THREE.XHRLoader(loadManager);
 
 		function shaderCallback(name) {
-			return function(data) {
+			return function (data) {
 				AssetManager.shaders[name] = data;
 			};
 		}

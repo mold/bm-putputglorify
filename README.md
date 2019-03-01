@@ -6,21 +6,20 @@ You will need [__Node.js__](https://nodejs.org/en/) (npm) to run the server. Clo
 
 ```
 npm install
-bower install
 ```
 
 Then in the root directory run the server with
 
 ```
-node app.js
+npm run server
 ```
 
 Go to [http://localhost:3004](http://localhost:3004) in the browser to run the viewer!
 
 ## CONNECT A CLIENT
-Either you can run a client directly in the viewer by clicking "Join", or you can go to [http://localhost:3004/client](http://localhost:3004/client) in the browser.
+Either you can add a controller directly in the viewer by clicking "Join", or you can go to [http://localhost:3004/controller](http://localhost:3004/controller) in the browser.
 
-You can also connect a client from an external device by changing _localhost_ to the ip-adress of the computer. On windows the QR-code/client adress in the viewer will unfortunately not work :(
+You can also connect from an external device by changing _localhost_ to the ip-adress of the computer. On windows the QR-code/client adress in the viewer will unfortunately not work :(
 
 # HAPPY PUTTING!
 

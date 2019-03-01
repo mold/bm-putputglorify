@@ -8,10 +8,10 @@ var MersenneTwister = require('mersenne-twister');
 var _ = require('lodash');
 var THREE = require('three');
 
-var ShellRobot = require('./serverjs/ShellRobot');
-var PathFinder = require('./serverjs/PathFinder');
+var ShellRobot = require('./robot/ShellRobot');
+var PathFinder = require('./map/PathFinder');
 
-var generateMaze = require('./serverjs/MazeGenerator');
+var generateMaze = require('./map/MazeGenerator');
 
 var port = 3004;
 var root = process.env.ROOT_URL;
@@ -50,28 +50,24 @@ var linearDampingFunction = function(v) {
     return Math.pow(maxLinearVelocity - v, 1.5);
 };
 
-app.use("/scripts", express.static(__dirname + "/public/javascripts"));
-app.use("/styles", express.static(__dirname + "/public/stylesheets"));
-app.use("/sprites", express.static(__dirname + "/public/sprites"));
-app.use("/shaders", express.static(__dirname + "/public/shaders"));
-app.use("/views", express.static(__dirname + "/views"));
-app.use("/server", express.static(__dirname + "/server"));
+console.log('now in ' + process.cwd());
+
+app.use("/lib", express.static(process.cwd() + "/lib"))
+app.use("/scripts", express.static(process.cwd() + "/src/client"));
+app.use("/styles", express.static(process.cwd() + "/resources/stylesheets"));
+app.use("/sprites", express.static(process.cwd() + "/resources/sprites"));
+app.use("/shaders", express.static(process.cwd() + "/resources/shaders"));
+app.use("/views", express.static(process.cwd() + "/views"));
 
 app.get('/', function(req, res) {
     res.sendFile("index.html", {
-        root: __dirname + "/views"
+        root: process.cwd() + "/views"
     });
 });
 
-app.get('/client', function(req, res) {
-    res.sendFile("client.html", {
-        root: __dirname + "/views"
-    });
-});
-
-app.get('/server', function(req, res) {
-    res.sendFile("server.html", {
-        root: __dirname + "/views"
+app.get('/controller', function(req, res) {
+    res.sendFile("controller.html", {
+        root: process.cwd() + "/views"
     });
 });
 

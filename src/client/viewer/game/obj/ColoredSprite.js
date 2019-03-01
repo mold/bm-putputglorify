@@ -3,8 +3,8 @@
  */
 define([
     'THREE',
-    'Sprite',
-    'AssetManager'
+    'game/obj/Sprite',
+    'game/AssetManager'
 ], function(
     THREE,
     Sprite,

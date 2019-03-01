@@ -1,11 +1,11 @@
 requirejs.config({
-    baseUrl: 'scripts',
+    baseUrl: 'scripts/viewer',
     paths: {
-        THREE: "lib/three.min",
-        MersenneTwister: "lib/mersenne-twister",
-        QRCode: "lib/qrcode.min",
-        SocketIO: "../socket.io/socket.io",
-        jQuery: "lib/jquery-2.1.4.min"
+        THREE: "../../lib/three.min",
+        MersenneTwister: "../../lib/mersenne-twister",
+        QRCode: "../../lib/qrcode.min",
+        SocketIO: "../../socket.io/socket.io",
+        jQuery: "../../lib/jquery-2.1.4.min"
     },
     shim: {
         THREE: {
