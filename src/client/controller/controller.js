@@ -1,6 +1,6 @@
 ;
 (function() {
-	var socket = io.connect(location.href);
+	var socket = io('/controller');
 	var MAX_DIMENSION = Math.max($(window).width(), $(window).height());
 	var MIN_DIMENSION = Math.min($(window).width(), $(window).height());
 	var MAX_DISTANCE = MIN_DIMENSION * 0.6;
@@ -125,7 +125,7 @@
 	}
 
 	function onPress(evt) {
-		// console.log(evt);
+		console.log(evt);
 		startX = evt.center.x;
 		startY = evt.center.y;
 		dpStart.attr({

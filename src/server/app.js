@@ -20,6 +20,8 @@ http.listen(port, function() {
     console.log(`Listening on port: ${port}`);
 });
 
+var viewer = io.of('/viewer');
+var player = io.of('/controller');
 
 if (!root) {
     // take the first ip that we can find!
@@ -252,7 +254,7 @@ var initWorldBodiesFromMap = function() {
             }
         }
 
-        io.emit("bodies", {
+        viewer.emit("bodies", {
             "players": clientData,
             "robots": robots
         });
@@ -270,18 +272,26 @@ var initWorldBodiesFromMap = function() {
 
 // This namespace is for the viewer
 // TODO: the player client also triggers this
-io.of('/').on('connection', function(socket) {
-    // Send map the first we do
-    io.emit('viewer-init', {
-        root: root,
-        client: root + 'client'
-    });
-    io.emit('map-update', map);
+
+viewer.on('connection', function(socket) {
+    socket.on('error', function (err){
+        console.error('Viewer Id: ' + socket.id + ' got error:', err);
+    })
+    // Send map and config
+    socket.emit('map-update', map);
+    socket.emit('host-config', { root: root });
     console.log('Viewer connected! Id:', socket.id);
+
+    socket.on('disconnect', function () {
+        console.log('Viewer disconnected! Id:', socket.id);
+    })
 });
 
 // This namespace is for the player
-io.of('/client').on('connection', function(socket) {
+player.on('connection', function(socket) {
+    socket.on('error', function (err) {
+        console.error('Player Id: ' + socket.id + ' got error:', err);
+    });
     // create a circular dynamic body in the middle
     var body = world
         .createBody()
@@ -308,7 +318,7 @@ io.of('/client').on('connection', function(socket) {
     };
 
     // tell everybody!
-    socket.broadcast.emit("body-create", clientData[socket.id]);
+    viewer.emit("body-create", clientData[socket.id]);
 
     // send a message to the client
     socket.emit("connected", clientData[socket.id]);
@@ -330,11 +340,11 @@ io.of('/client').on('connection', function(socket) {
     });
 
     socket.on('update movement', function(msg) {
-        io.emit('update movement', msg);
+        viewer.emit('update movement', msg);
     });
     socket.on('disconnect', function() {
         // tell everybody!
-        io.emit("body-destroy", clientData[socket.id]);
+        viewer.emit("body-destroy", clientData[socket.id]);
 
         console.log('Client disconnected!');
         var player = players[socket.id];

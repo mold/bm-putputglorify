@@ -5,7 +5,6 @@ define([
     "game/obj/Sprite",
     "game/AssetManager",
     "jQuery",
-    "SocketIO",
     "THREE",
     "QRCode"
 ], function (
@@ -15,13 +14,15 @@ define([
     Sprite,
     AssetManager,
     $,
-    SocketIO,
     THREE,
     QRCode
 ) {
-        var iohandler = new IOHandler();
+        var iohandler = new IOHandler(load);
         var socket = iohandler.getSocket();
-
+        console.log('socket:', socket);
+        socket.on('error', function (err) {
+            console.error(err);
+        });
         var dungeon = null;
         var scene = new THREE.Scene();
         var clock = new THREE.Clock();
@@ -57,7 +58,6 @@ define([
                 iframe.attr("src", "");
                 ctrl.hide(500);
                 joinButton.html("Join");
-
             }
 
             closeBtn.click(closeController);
@@ -83,7 +83,6 @@ define([
 
         window.addEventListener('resize', resizeHandler, false);
 
-
         socket.on("body-create", function (body) {
             console.info("client connected");
         });
@@ -97,6 +96,7 @@ define([
         });
 
         socket.on("bodies", function (bodies) {
+            console.log('bodies');
             if (dungeon) {
                 var b = 0;
                 //var coords = [];
@@ -108,7 +108,6 @@ define([
                             body: body,
                             obj: null
                         };
-                        load();
 
                     } else if (characters[body.id].obj) {
                         var ch = characters[body.id].obj;
@@ -140,7 +139,6 @@ define([
                             body: body,
                             obj: null
                         };
-                        load();
 
                     } else if (robots[body.id].obj) {
                         var rb = robots[body.id].obj;
@@ -203,8 +201,6 @@ define([
             }
         });
 
-        socket.on("viewer-init", viewerInit);
-        socket.on("map-update", load);
         AssetManager.onLoad(init);
 
         resizeHandler();
@@ -309,7 +305,6 @@ define([
         function init() {
             var loaded = load();
             if (!loaded) {
-                console.info('not loaded yet.');
                 return setTimeout(init, 1);
             }
             console.info('loaded!');
@@ -319,7 +314,8 @@ define([
         function viewerInit(data) {
             var qrcodeEl = document.getElementById("qrcode");
             var clientEl = document.getElementById("client-url");
-            clientEl.innerHTML = data.client;
+            console.info('viewerInit:', data);
+            clientEl.innerHTML = data;
             qrcodeEl.innerHTML = "";
             var qrcode = new QRCode(qrcodeEl, {
                 text: data.client,

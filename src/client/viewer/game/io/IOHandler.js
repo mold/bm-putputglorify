@@ -1,8 +1,8 @@
 define(
 	["THREE", "SocketIO"],
 	function (THREE, io) {
-		var IOHandler = function () {
-			this.socket = io();
+		var IOHandler = function (load) {
+			this.socket = io('/viewer');
 			this.dir = 0;
 			this.refTiltLR = 0;
 			this.refTiltFB = 0;
@@ -19,9 +19,6 @@ define(
 			}).bind(this));
 
 			this.map = null;
-			socket.on('viewer-init', function(config) {
-				console.info('Initialized session')
-			});
 
 			socket.on('map-update', (function (map) {
 				console.info('%c[socket-io] map-update', 'font-family: "Comic Sans MS", "Ubuntu"; font-size: 10pt; color: blue;');
