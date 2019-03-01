@@ -3,7 +3,7 @@
     @see test/scripts/main.js for example usage.
 */
 
-var PriorityQueue = require('./PriorityQueue');
+var PriorityQueue = require('../queue/PriorityQueue');
 
 
 /**

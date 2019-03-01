@@ -1,6 +1,5 @@
 define([
     "THREE",
-    "RandomEngine",
     "IOHandler",
     "Sprite",
     "ColoredSprite",
@@ -11,7 +10,6 @@ define([
     "jQuery"
 ], function(
     THREE,
-    RandomEngine,
     IOHandler,
     Sprite,
     ColoredSprite,
@@ -19,7 +17,7 @@ define([
     SocketIO,
     AssetManager,
     QRCode,
-    jQuery
+    $
 ) {
     var iohandler = new IOHandler();
     var socket = new SocketIO();

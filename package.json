@@ -4,7 +4,7 @@
   "description": "it's in the name",
   "main": "client/index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "server": "node src/server/app.js"
   },
   "repository": {
     "type": "git",
@@ -31,5 +31,8 @@
     "prototypes": "^1.1.0",
     "socket.io": "^2.2.0",
     "three": "^0.73.0"
+  },
+  "devDependencies": {
+    "webpack": "^4.29.6"
   }
 }
