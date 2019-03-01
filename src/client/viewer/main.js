@@ -20,7 +20,7 @@ define([
     QRCode
 ) {
         var iohandler = new IOHandler();
-        var socket = new SocketIO();
+        var socket = iohandler.getSocket();
 
         var dungeon = null;
         var scene = new THREE.Scene();
@@ -281,11 +281,13 @@ define([
             if (!AssetManager.loaded()) {
                 return;
             }
-
+            map = iohandler.getMap();
+            if (!map) {
+                return;
+            }
             while (scene.children.length > 0)
                 scene.remove(scene.children[0]);
 
-            map = iohandler.getMap();
 
             dungeon = new Dungeon(map);
             dungeon.position.set(-map[0].length / 2, map.length / 2 - 1, 0);
@@ -301,13 +303,16 @@ define([
                 rb.obj = createCharacter();
                 dungeon.add(rb.obj);
             }
+            return true;
         }
 
         function init() {
-            if (iohandler.getMap()) {
-                load();
+            var loaded = load();
+            if (!loaded) {
+                console.info('not loaded yet.');
+                return setTimeout(init, 1);
             }
-
+            console.info('loaded!');
             loop();
         }
 

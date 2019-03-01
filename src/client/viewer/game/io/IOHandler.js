@@ -2,14 +2,14 @@ define(
 	["THREE", "SocketIO"],
 	function (THREE, io) {
 		var IOHandler = function () {
-			socket = io();
-
+			this.socket = io();
 			this.dir = 0;
 			this.refTiltLR = 0;
 			this.refTiltFB = 0;
 			this.refDir = 0;
 			this.tiltFB = 0;
 			this.tiltLR = 0;
+			var socket = this.socket;
 
 			socket.on('update movement', (function (msg) {
 				this.tiltFB = msg.tiltFB;
@@ -19,14 +19,22 @@ define(
 			}).bind(this));
 
 			this.map = null;
+			socket.on('viewer-init', function(config) {
+				console.info('Initialized session')
+			});
+
 			socket.on('map-update', (function (map) {
-				console.info('%c[socket-io] map-update', 'font-family: Comic Sans MS; font-size: 14pt; color: blue;');
+				console.info('%c[socket-io] map-update', 'font-family: "Comic Sans MS", "Ubuntu"; font-size: 10pt; color: blue;');
 				this.map = map;
 			}).bind(this));
 		};
 
 		IOHandler.prototype.getMap = function () {
 			return this.map;
+		};
+
+		IOHandler.prototype.getSocket = function () {
+			return this.socket;
 		};
 
 		IOHandler.prototype.getRotationAndPosition = function () {
