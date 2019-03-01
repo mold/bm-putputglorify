@@ -47,7 +47,7 @@ define(["THREE"], function (THREE) {
 
 		imgLoader.load("sprites/sprite_map.png", imageCallback("sprite_map"));
 
-		var shaderLoader = new THREE.XHRLoader(loadManager);
+		var shaderLoader = new THREE.FileLoader(loadManager);
 
 		function shaderCallback(name) {
 			return function (data) {
