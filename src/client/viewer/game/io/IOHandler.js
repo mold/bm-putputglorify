@@ -1,9 +1,7 @@
 define(
-	["THREE",
-		"SocketIO"
-	],
-	function(THREE, io) {
-		var IOHandler = function() {
+	["THREE", "SocketIO"],
+	function (THREE, io) {
+		var IOHandler = function () {
 			socket = io();
 
 			this.dir = 0;
@@ -13,7 +11,7 @@ define(
 			this.tiltFB = 0;
 			this.tiltLR = 0;
 
-			socket.on('update movement', (function(msg) {
+			socket.on('update movement', (function (msg) {
 				this.tiltFB = msg.tiltFB;
 				this.tiltLR = msg.tiltLR;
 				this.dir = msg.dir;
@@ -21,17 +19,17 @@ define(
 			}).bind(this));
 
 			this.map = null;
-			socket.on('map-update', (function(map) {
+			socket.on('map-update', (function (map) {
 				console.info('%c[socket-io] map-update', 'font-family: Comic Sans MS; font-size: 14pt; color: blue;');
 				this.map = map;
 			}).bind(this));
 		};
 
-		IOHandler.prototype.getMap = function() {
+		IOHandler.prototype.getMap = function () {
 			return this.map;
 		};
 
-		IOHandler.prototype.getRotationAndPosition = function() {
+		IOHandler.prototype.getRotationAndPosition = function () {
 			var rotation = new THREE.Vector3(0, 0, 0);
 			var position = new THREE.Vector3(0, 0, 0);
 
@@ -47,7 +45,7 @@ define(
 			return [q, position];
 		};
 
-		var degToRad = function(deg) {
+		var degToRad = function (deg) {
 			return deg * (Math.PI / 180.0);
 		}
 

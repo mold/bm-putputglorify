@@ -1,9 +1,4 @@
-define([
-	'THREE'
-], function(
-	THREE
-) {
-
+define(['THREE'], function (THREE) {
 	function Wall(x, y, type, vOffset) {
 		this.vertices = [
 			new THREE.Vector3(x + 0, y + 0, 0),
@@ -36,12 +31,12 @@ define([
 		];
 	}
 
-	Wall.prototype.setVertexOffset = function(offset) {
+	Wall.prototype.setVertexOffset = function (offset) {
 		this.faces[0].set(offset + 0, offset + 1, offset + 2);
 		this.faces[1].set(offset + 0, offset + 2, offset + 3);
 	};
 
-	Wall.prototype.getTileCoords = function(type) {
+	Wall.prototype.getTileCoords = function (type) {
 		var top = Math.floor(type / Math.pow(16, 6)) & 0x111;
 		var mid = Math.floor(type / Math.pow(16, 3)) & 0x111;
 		var base = (type) & 0x111;

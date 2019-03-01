@@ -1,15 +1,8 @@
 /**
  * A 2-dimensional sprite.
  */
-define([
-    'THREE'
-    //'utils/animation'
-], function(
-    THREE
-    //Animation
-) {
-
-    var Sprite = function(image, width, height, spriteWidth, spriteHeight, lights) {
+define(['THREE'], function (THREE) {
+    var Sprite = function (image, width, height, spriteWidth, spriteHeight, lights) {
         THREE.Mesh.call(this);
 
         if (width === undefined || height === undefined) {
@@ -63,7 +56,7 @@ define([
 
     Sprite.prototype = Object.create(THREE.Mesh.prototype);
 
-    Sprite.prototype.clone = function(object, recursive) {
+    Sprite.prototype.clone = function (object, recursive) {
         if (object === undefined) {
             object = new Sprite(this.texture.image, this.width, this.height, this.spriteWidth, this.spriteHeight);
         }
@@ -72,16 +65,16 @@ define([
         return object;
     };
 
-    Sprite.prototype.setSize = function(width, height) {
+    Sprite.prototype.setSize = function (width, height) {
         this.scale.set(width, height, 1);
     };
 
-    Sprite.prototype.setImage = function(image) {
+    Sprite.prototype.setImage = function (image) {
         this.material.map = image;
         this.material.needsUpdate = true;
     }
 
-    Sprite.prototype.setTile = function(index) {
+    Sprite.prototype.setTile = function (index) {
         var y = Math.floor(index / this.cols);
         var x = index - y * this.cols;
         this.texture.offset.x = x / this.cols;
@@ -106,12 +99,12 @@ define([
         });
         this.setTile(cycle[0]);
     };
-
+ 
     Sprite.prototype.stop = function() {
         Animation.removeAnimation(this.animation);
     };*/
 
-    Sprite.prototype.update = function() {
+    Sprite.prototype.update = function () {
         this.texture.needsUpdate = true;
     }
 
