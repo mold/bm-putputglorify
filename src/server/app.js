@@ -65,8 +65,8 @@ app.get('/', function(req, res) {
     });
 });
 
-app.get('/client', function(req, res) {
-    res.sendFile("client.html", {
+app.get('/controller', function(req, res) {
+    res.sendFile("controller.html", {
         root: process.cwd() + "/views"
     });
 });

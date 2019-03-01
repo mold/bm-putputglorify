@@ -67,7 +67,7 @@ define([
         if (ctrl.css("display") == "none") {
             // load a controller on the page
             ctrl.show(500);
-            iframe.attr("src", "http://" + window.location.host + window.location.pathname + "client");
+            iframe.attr("src", "http://" + window.location.host + window.location.pathname + "controller");
             joinButton.html("Leave");
         } else {
             closeController();
